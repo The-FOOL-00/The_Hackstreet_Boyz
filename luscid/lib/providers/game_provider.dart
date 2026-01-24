@@ -39,7 +39,6 @@ class GameProvider extends ChangeNotifier {
   GameRoom? _room;
   StreamSubscription? _roomSubscription;
   String? _currentUserId;
-  bool _gameStarted = false; // Track if we already started the game
 
   // Loading & errors
   bool _isLoading = false;
@@ -288,27 +287,7 @@ class GameProvider extends ChangeNotifier {
 
     _setLoading(true);
     try {
-      // Derive difficulty from gridSize if not set
-      GameDifficulty difficulty = _difficulty;
-      if (difficulty == null) {
-        // Infer difficulty from gridSize
-        switch (_room!.gridSize) {
-          case 2:
-            difficulty = GameDifficulty.easy;
-            break;
-          case 4:
-            difficulty = GameDifficulty.medium;
-            break;
-          case 6:
-            difficulty = GameDifficulty.hard;
-            break;
-          default:
-            difficulty = GameDifficulty.medium;
-        }
-        _difficulty = difficulty;
-      }
-
-      await _firebaseService.startGame(_room!.roomCode, difficulty);
+      await _firebaseService.startGame(_room!.roomCode, _difficulty);
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -318,7 +297,6 @@ class GameProvider extends ChangeNotifier {
 
   void _subscribeToRoom(String roomCode) {
     _roomSubscription?.cancel();
-    _gameStarted = false; // Reset when subscribing to a new room
     debugPrint('[GameProvider] Subscribing to room: $roomCode');
 
     _roomSubscription = _firebaseService.watchRoom(roomCode).listen((room) {

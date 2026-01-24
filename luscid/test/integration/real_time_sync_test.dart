@@ -4,7 +4,6 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luscid/services/firebase_service.dart';
 import 'package:luscid/models/game_room_model.dart';
 import 'package:luscid/models/game_card_model.dart';
 import 'package:luscid/services/game_service.dart';
@@ -196,9 +195,7 @@ void main() {
       expect((json[2] as Map)['isFlipped'], false);
 
       // Deserialize back
-      final restored = json
-          .map((c) => GameCard.fromJson(c as Map<String, dynamic>))
-          .toList();
+      final restored = json.map((c) => GameCard.fromJson(c)).toList();
 
       expect(restored[0].isFlipped, true);
       expect(restored[1].isFlipped, true);

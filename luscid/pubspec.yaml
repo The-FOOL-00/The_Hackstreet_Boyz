@@ -14,6 +14,7 @@ dependencies:
   firebase_core: ^4.4.0
   firebase_auth: ^6.1.4
   firebase_database: ^12.1.2
+  firebase_storage: ^13.0.6
   
   # State Management
   provider: ^6.1.1
@@ -27,6 +28,15 @@ dependencies:
   # Utilities
   uuid: ^4.3.3
   intl: ^0.18.1
+  
+  # Contacts
+  flutter_contacts: ^1.1.9+2
+  permission_handler: ^11.3.1
+  
+  # Audio Recording (Walkie-Talkie)
+  record: ^6.1.2
+  audioplayers: ^6.1.0
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:

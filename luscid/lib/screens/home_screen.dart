@@ -1,6 +1,6 @@
 /// Home screen with main navigation
 ///
-/// Central hub with four main actions: Play, Multiplayer, Activity, Help.
+/// Central hub with main actions: Games, Friends, Activity, Help.
 library;
 
 import 'package:flutter/material.dart';
@@ -15,6 +15,8 @@ import 'difficulty_select_screen.dart';
 import 'multiplayer_setup_screen.dart';
 import 'activity_screen.dart';
 import 'help_screen.dart';
+import 'buddy_circle_screen.dart';
+import 'shopping_game_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -93,71 +95,105 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
               // Main buttons
               Expanded(
-                child: Column(
-                  children: [
-                    // Play Memory Game
-                    LargeButton(
-                      text: 'Play Memory Game',
-                      emoji: '🧠',
-                      isPrimary: true,
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const DifficultySelectScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    // Play with Someone
-                    LargeButton(
-                      text: 'Play With Someone',
-                      emoji: '👥',
-                      isPrimary: false,
-                      onPressed: () {
-                        // Set user ID for multiplayer
-                        final gameProvider = context.read<GameProvider>();
-                        gameProvider.setCurrentUserId(
-                          authProvider.userId ?? '',
-                        );
-
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const MultiplayerSetupScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    // Today's Activity
-                    LargeButton(
-                      text: 'Today\'s Activity',
-                      emoji: '📅',
-                      isPrimary: false,
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const ActivityScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    // Help
-                    LargeButton(
-                      text: 'Help',
-                      emoji: '❓',
-                      isPrimary: false,
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const HelpScreen()),
-                        );
-                      },
-                    ),
-                  ],
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Play Memory Game (Single Player)
+                      LargeButton(
+                        text: 'Play Memory Game',
+                        emoji: '🧠',
+                        isPrimary: true,
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const DifficultySelectScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      // Multiplayer Memory Game (Room Code)
+                      LargeButton(
+                        text: 'Multiplayer Game',
+                        emoji: '🎮',
+                        isPrimary: false,
+                        onPressed: () {
+                          // Set user ID for multiplayer
+                          final gameProvider = context.read<GameProvider>();
+                          gameProvider.setCurrentUserId(
+                            authProvider.userId ??
+                                'user_${DateTime.now().millisecondsSinceEpoch}',
+                          );
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const MultiplayerSetupScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      // Shopping List Game (New!)
+                      LargeButton(
+                        text: 'Shopping List Game',
+                        emoji: '🛒',
+                        isPrimary: true,
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const ShoppingGameScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      // Play with Friends (Buddy Circle)
+                      LargeButton(
+                        text: 'Play With Friends',
+                        emoji: '👥',
+                        isPrimary: false,
+                        onPressed: () {
+                          // Navigate to Buddy Circle to invite friends
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const BuddyCircleScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      // Today's Activity
+                      LargeButton(
+                        text: 'Today\'s Activity',
+                        emoji: '📅',
+                        isPrimary: false,
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const ActivityScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      // Help
+                      LargeButton(
+                        text: 'Help',
+                        emoji: '❓',
+                        isPrimary: false,
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const HelpScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
                 ),
               ),
             ],

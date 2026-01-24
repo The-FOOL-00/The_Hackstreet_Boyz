@@ -1,11 +1,74 @@
 {
   "rules": {
-    ".read": true,
-    ".write": true,
+    // Users collection - user can read/write own data, others can read status
+    "users": {
+      "$uid": {
+        ".read": true,
+        ".write": "auth != null && auth.uid == $uid",
+        "status": {
+          ".read": true
+        },
+        "lastActive": {
+          ".read": true
+        }
+      }
+    },
+    
+    // Phone index for contact matching - read only for authenticated users
+    "phoneIndex": {
+      ".read": "auth != null",
+      "$phone": {
+        ".write": "auth != null"
+      }
+    },
+    
+    // Game rooms - participants can read/write
     "game_rooms": {
       "$roomId": {
         ".read": true,
-        ".write": true
+        ".write": true,
+        ".validate": "newData.hasChildren(['roomCode', 'hostId', 'status'])"
+      }
+    },
+    
+    // Shopping game rooms - participants can read/write
+    "shopping_rooms": {
+      "$roomId": {
+        ".read": true,
+        ".write": true,
+        ".validate": "newData.hasChildren(['roomCode', 'hostId', 'phase'])"
+      }
+    },
+    
+    // Invites - sender/receiver can read/write their invites
+    "invites": {
+      "outgoing": {
+        "$userId": {
+          ".read": "auth != null && auth.uid == $userId",
+          ".write": "auth != null && auth.uid == $userId",
+          "$inviteId": {
+            ".read": "auth != null",
+            ".write": "auth != null"
+          }
+        }
+      },
+      "incoming": {
+        "$userId": {
+          ".read": "auth != null && auth.uid == $userId",
+          ".write": "auth != null",
+          "$inviteId": {
+            ".read": "auth != null",
+            ".write": "auth != null"
+          }
+        }
+      }
+    },
+    
+    // Voice notes storage metadata
+    "voice_notes": {
+      "$roomId": {
+        ".read": true,
+        ".write": "auth != null"
       }
     }
   }

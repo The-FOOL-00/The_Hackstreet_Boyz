@@ -7,6 +7,9 @@ import 'core/theme/app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/game_provider.dart';
 import 'providers/activity_provider.dart';
+import 'providers/buddy_list_provider.dart';
+import 'providers/invite_provider.dart';
+import 'providers/shopping_list_provider.dart';
 import 'services/local_storage_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/pin_entry_screen.dart';
@@ -18,6 +21,11 @@ import 'screens/multiplayer_setup_screen.dart';
 import 'screens/result_screen.dart';
 import 'screens/activity_screen.dart';
 import 'screens/help_screen.dart';
+import 'screens/phone_auth_screen.dart';
+import 'screens/otp_verification_screen.dart';
+import 'screens/profile_setup_screen.dart';
+import 'screens/buddy_circle_screen.dart';
+import 'screens/shopping_game_screen.dart';
 
 /// Main entry point for the Luscid Memory Game app
 /// An elderly-friendly memory matching game with Firebase integration
@@ -64,6 +72,12 @@ class LuscidApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => GameProvider()),
         // Activity provider for daily checklist
         ChangeNotifierProvider(create: (_) => ActivityProvider()),
+        // Buddy list provider for contact matching
+        ChangeNotifierProvider(create: (_) => BuddyListProvider()),
+        // Invite provider for game invitations
+        ChangeNotifierProvider(create: (_) => InviteProvider()),
+        // Shopping list game provider
+        ChangeNotifierProvider(create: (_) => ShoppingListProvider()),
       ],
       child: MaterialApp(
         title: 'Luscid - Memory Game',
@@ -83,6 +97,14 @@ class LuscidApp extends StatelessWidget {
           '/result': (context) => const ResultScreen(),
           '/activities': (context) => const ActivityScreen(),
           '/help': (context) => const HelpScreen(),
+          // Phone authentication routes
+          '/phone-auth': (context) => const PhoneAuthScreen(),
+          '/otp-verification': (context) => const OtpVerificationScreen(),
+          '/profile-setup': (context) => const ProfileSetupScreen(),
+          // Buddy and invite routes
+          '/buddy-circle': (context) => const BuddyCircleScreen(),
+          // Shopping list game
+          '/shopping-game': (context) => const ShoppingGameScreen(),
         },
 
         // Custom page transitions for elderly-friendly navigation

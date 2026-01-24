@@ -104,23 +104,21 @@ class ActivityCard extends StatelessWidget {
                 ),
               )
             else
-              SizedBox(
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: onMarkComplete,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.accentGreen,
-                    foregroundColor: AppColors.textOnPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+              ElevatedButton(
+                onPressed: onMarkComplete,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accentGreen,
+                  foregroundColor: AppColors.textOnPrimary,
+                  minimumSize: const Size(80, 48),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
-                    'Done',
-                    style: AppTextStyles.buttonMedium.copyWith(
-                      color: AppColors.textOnPrimary,
-                    ),
+                ),
+                child: Text(
+                  'Done',
+                  style: AppTextStyles.buttonMedium.copyWith(
+                    color: AppColors.textOnPrimary,
                   ),
                 ),
               ),

@@ -9,6 +9,7 @@ import '../core/constants/colors.dart';
 import '../core/constants/text_styles.dart';
 import '../providers/game_provider.dart';
 import '../providers/activity_provider.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/game_card_widget.dart';
 import '../voice_chat/voice_chat_service.dart';
 import 'result_screen.dart';
@@ -38,15 +39,15 @@ class _GameScreenState extends State<GameScreen> {
 
   void _initVoiceChat() {
     final gameProvider = context.read<GameProvider>();
+    final authProvider = context.read<AuthProvider>();
     final room = gameProvider.room;
-    if (gameProvider.isMultiplayer && room != null) {
-      // Use hostId or guestId based on isMyTurn state
-      final myId = gameProvider.isMyTurn ? room.currentTurn : 
-          (room.hostId == room.currentTurn ? room.guestId : room.hostId);
+    final currentUserId = authProvider.userId;
+    
+    if (gameProvider.isMultiplayer && room != null && currentUserId != null) {
       _voiceChat = VoiceChatService(
         roomId: room.roomCode,
-        userId: myId ?? 'player_${DateTime.now().millisecondsSinceEpoch}',
-        userName: 'Player',
+        userId: currentUserId,
+        userName: authProvider.user?.displayName ?? 'Player',
       );
       _voiceChat!.joinRoom();
       _voiceChat!.addListener(_onVoiceChatChanged);

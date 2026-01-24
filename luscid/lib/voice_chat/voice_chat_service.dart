@@ -11,6 +11,17 @@ import 'package:permission_handler/permission_handler.dart';
 import 'signaling_service.dart';
 import 'webrtc_manager.dart';
 
+/// Debug logger for VoiceChatService
+class _Log {
+  static const String _tag = '🎙️ VoiceChatService';
+  
+  static void info(String message) => print('$_tag [INFO] $message');
+  static void debug(String message) => print('$_tag [DEBUG] $message');
+  static void error(String message, [Object? e]) => 
+      print('$_tag [ERROR] $message${e != null ? ': $e' : ''}');
+  static void signal(String message) => print('$_tag [SIGNAL] $message');
+}
+
 /// Connection state for voice chat
 enum VoiceChatState {
   disconnected,
@@ -65,13 +76,16 @@ class VoiceChatService extends ChangeNotifier {
 
   /// Request microphone permission
   Future<bool> _requestPermission() async {
+    _Log.info('Requesting microphone permission...');
     final status = await Permission.microphone.request();
     if (!status.isGranted) {
       _state = VoiceChatState.error;
       _errorMessage = 'Microphone permission denied';
+      _Log.error('Microphone permission denied');
       notifyListeners();
       return false;
     }
+    _Log.info('✅ Microphone permission granted');
     return true;
   }
 
@@ -79,9 +93,11 @@ class VoiceChatService extends ChangeNotifier {
   Future<bool> joinRoom() async {
     if (_state == VoiceChatState.connecting ||
         _state == VoiceChatState.connected) {
+      _Log.debug('Already ${_state == VoiceChatState.connecting ? "connecting" : "connected"}');
       return true;
     }
 
+    _Log.info('Joining voice chat room: $roomId as $userId ($userName)');
     _state = VoiceChatState.connecting;
     _errorMessage = null;
     notifyListeners();
@@ -93,6 +109,7 @@ class VoiceChatService extends ChangeNotifier {
       }
 
       // Initialize WebRTC
+      _Log.info('Initializing WebRTC...');
       await _webrtc.initialize();
 
       // Set up WebRTC callbacks
@@ -101,6 +118,7 @@ class VoiceChatService extends ChangeNotifier {
       _webrtc.onRemoteTrack = _onRemoteTrack;
 
       // Join signaling room
+      _Log.signal('Joining signaling room...');
       await _signaling.join(userName);
 
       // Listen for signaling messages
@@ -112,19 +130,21 @@ class VoiceChatService extends ChangeNotifier {
 
       // Connect to existing participants
       final existingPeers = await _signaling.getParticipants();
+      _Log.info('Found ${existingPeers.length} existing peer(s) in room');
       for (final peerId in existingPeers) {
+        _Log.info('Connecting to existing peer: $peerId');
         await _connectToPeer(peerId);
       }
 
       _state = VoiceChatState.connected;
       notifyListeners();
-      print('VoiceChatService: Joined room $roomId');
+      _Log.info('✅ Successfully joined room $roomId');
       return true;
     } catch (e) {
       _state = VoiceChatState.error;
       _errorMessage = 'Failed to join voice chat: $e';
       notifyListeners();
-      print('VoiceChatService: Error joining room: $e');
+      _Log.error('Failed to join room', e);
       return false;
     }
   }
@@ -132,16 +152,18 @@ class VoiceChatService extends ChangeNotifier {
   /// Connect to a peer by creating an offer
   Future<void> _connectToPeer(String peerId) async {
     try {
+      _Log.signal('Creating offer for peer: $peerId');
       final offer = await _webrtc.createOffer(peerId);
       await _signaling.sendOffer(peerId, offer.toMap());
-      print('VoiceChatService: Sent offer to $peerId');
+      _Log.signal('✅ Sent offer to $peerId');
     } catch (e) {
-      print('VoiceChatService: Error connecting to peer $peerId: $e');
+      _Log.error('Error connecting to peer $peerId', e);
     }
   }
 
   /// Handle incoming signaling messages
   Future<void> _handleSignalingMessage(SignalingMessage message) async {
+    _Log.signal('Received ${message.type.name} from ${message.fromUserId}');
     switch (message.type) {
       case SignalType.offer:
         await _handleOffer(message);
@@ -161,29 +183,31 @@ class VoiceChatService extends ChangeNotifier {
   /// Handle incoming offer
   Future<void> _handleOffer(SignalingMessage message) async {
     try {
+      _Log.signal('Processing offer from ${message.fromUserId}...');
       final offer = RTCSessionDescription(
         message.data['sdp'] as String,
         message.data['type'] as String,
       );
       final answer = await _webrtc.handleOffer(message.fromUserId, offer);
       await _signaling.sendAnswer(message.fromUserId, answer.toMap());
-      print('VoiceChatService: Handled offer from ${message.fromUserId}');
+      _Log.signal('✅ Sent answer to ${message.fromUserId}');
     } catch (e) {
-      print('VoiceChatService: Error handling offer: $e');
+      _Log.error('Error handling offer from ${message.fromUserId}', e);
     }
   }
 
   /// Handle incoming answer
   Future<void> _handleAnswer(SignalingMessage message) async {
     try {
+      _Log.signal('Processing answer from ${message.fromUserId}...');
       final answer = RTCSessionDescription(
         message.data['sdp'] as String,
         message.data['type'] as String,
       );
       await _webrtc.handleAnswer(message.fromUserId, answer);
-      print('VoiceChatService: Handled answer from ${message.fromUserId}');
+      _Log.signal('✅ Processed answer from ${message.fromUserId}');
     } catch (e) {
-      print('VoiceChatService: Error handling answer: $e');
+      _Log.error('Error handling answer from ${message.fromUserId}', e);
     }
   }
 
@@ -197,12 +221,13 @@ class VoiceChatService extends ChangeNotifier {
       );
       await _webrtc.addIceCandidate(message.fromUserId, candidate);
     } catch (e) {
-      print('VoiceChatService: Error handling ICE candidate: $e');
+      _Log.error('Error handling ICE candidate from ${message.fromUserId}', e);
     }
   }
 
   /// Handle peer leaving
   Future<void> _handleLeave(SignalingMessage message) async {
+    _Log.info('Peer leaving: ${message.fromUserId}');
     await _webrtc.closePeer(message.fromUserId);
     _connectedPeers.remove(message.fromUserId);
     notifyListeners();
@@ -210,16 +235,16 @@ class VoiceChatService extends ChangeNotifier {
 
   /// Called when a new participant joins
   void _onParticipantJoined(String peerId) {
+    _Log.info('👋 New participant joined: $peerId');
     // The new participant will send us an offer, so we just wait
-    print('VoiceChatService: Participant joined: $peerId');
   }
 
   /// Called when a participant leaves
   void _onParticipantLeft(String peerId) {
+    _Log.info('👋 Participant left: $peerId');
     _webrtc.closePeer(peerId);
     _connectedPeers.remove(peerId);
     notifyListeners();
-    print('VoiceChatService: Participant left: $peerId');
   }
 
   /// Called when we have an ICE candidate to send
@@ -229,25 +254,32 @@ class VoiceChatService extends ChangeNotifier {
 
   /// Called when connection state changes
   void _onConnectionState(String peerId, RTCPeerConnectionState state) {
+    _Log.info('Connection state with $peerId: $state');
     if (state == RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
       _connectedPeers.add(peerId);
+      _Log.info('✅ Connected to peer: $peerId (total: ${_connectedPeers.length})');
     } else if (state == RTCPeerConnectionState.RTCPeerConnectionStateDisconnected ||
         state == RTCPeerConnectionState.RTCPeerConnectionStateFailed ||
         state == RTCPeerConnectionState.RTCPeerConnectionStateClosed) {
       _connectedPeers.remove(peerId);
+      _Log.info('❌ Disconnected from peer: $peerId (remaining: ${_connectedPeers.length})');
     }
     notifyListeners();
   }
 
   /// Called when we receive a remote audio track
   void _onRemoteTrack(String peerId, MediaStream stream) {
-    // Audio plays automatically, no action needed
-    print('VoiceChatService: Receiving audio from $peerId');
+    final audioTracks = stream.getAudioTracks();
+    _Log.info('🔊 Receiving audio from $peerId: ${audioTracks.length} track(s)');
+    for (final track in audioTracks) {
+      _Log.debug('  Track: enabled=${track.enabled}, muted=${track.muted}');
+    }
   }
 
   /// Toggle mute state
   void toggleMute() {
     _webrtc.toggleMute();
+    _Log.info('Mute toggled: ${_webrtc.isMuted ? "MUTED" : "UNMUTED"}');
     notifyListeners();
   }
 
@@ -259,6 +291,7 @@ class VoiceChatService extends ChangeNotifier {
 
   /// Leave the voice chat room
   Future<void> leaveRoom() async {
+    _Log.info('Leaving room $roomId...');
     await _messageSubscription?.cancel();
     await _joinSubscription?.cancel();
     await _leaveSubscription?.cancel();
@@ -269,11 +302,12 @@ class VoiceChatService extends ChangeNotifier {
     _state = VoiceChatState.disconnected;
     notifyListeners();
 
-    print('VoiceChatService: Left room $roomId');
+    _Log.info('✅ Left room $roomId');
   }
 
   @override
   void dispose() {
+    _Log.info('Disposing VoiceChatService...');
     leaveRoom();
     _signaling.dispose();
     super.dispose();

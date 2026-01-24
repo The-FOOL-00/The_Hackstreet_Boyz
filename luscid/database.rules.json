@@ -106,6 +106,24 @@
         ".read": true,
         ".write": "auth != null"
       }
+    },
+    
+    // Voice rooms for WebRTC P2P signaling
+    "voice_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "participants": {
+          "$userId": {
+            ".read": "auth != null",
+            ".write": "auth != null && auth.uid == $userId"
+          }
+        },
+        "signals": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        }
+      }
     }
   }
 }

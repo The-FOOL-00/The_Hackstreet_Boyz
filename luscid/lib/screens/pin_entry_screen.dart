@@ -1,6 +1,6 @@
 /// PIN entry screen for authentication
 ///
-/// Simple 4-digit PIN entry with large numeric keypad.
+/// Stitch Design: Gradient header, decorative circles, card-style keypad.
 library;
 
 import 'package:flutter/material.dart';
@@ -83,84 +83,150 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
           isLoading: authProvider.isLoading,
           message: 'Signing in...',
           child: Scaffold(
-            backgroundColor: AppColors.backgroundBeige,
-            body: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    const Spacer(),
-                    // Header
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryBlue,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Center(
-                        child: Text('🧠', style: TextStyle(fontSize: 40)),
-                      ),
+            backgroundColor: AppColors.backgroundLight,
+            body: Stack(
+              children: [
+                // Stitch: Decorative blur circle top-right
+                Positioned(
+                  top: -80,
+                  right: -60,
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.primaryBlue.withOpacity(0.1),
                     ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'Welcome Back!',
-                      style: AppTextStyles.heading2,
-                      textAlign: TextAlign.center,
+                  ),
+                ),
+                // Stitch: Decorative blur circle bottom-left
+                Positioned(
+                  bottom: 60,
+                  left: -80,
+                  child: Container(
+                    width: 160,
+                    height: 160,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.primarySoft.withOpacity(0.5),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Enter your 4-digit PIN',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 40),
-                    // Error message
-                    if (_error != null) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.error),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.error_outline,
-                              color: AppColors.error,
+                  ),
+                ),
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      children: [
+                        const Spacer(flex: 1),
+                        // Stitch: Logo container with gradient
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [AppColors.primaryBlue, Color(0xFF60A5FA)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                _error!,
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppColors.error,
-                                ),
+                            borderRadius: BorderRadius.circular(28),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primaryBlue.withOpacity(0.3),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: const Center(
+                            child: Text('🧠', style: TextStyle(fontSize: 48)),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        Text(
+                          'Welcome Back!',
+                          style: AppTextStyles.heading2.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primarySoft,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'Enter your 4-digit PIN',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.primaryBlue,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        // Error message
+                        if (_error != null) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.error.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppColors.error.withOpacity(0.3),
                               ),
                             ),
-                          ],
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.error.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.error_outline_rounded,
+                                    color: AppColors.error,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Flexible(
+                                  child: Text(
+                                    _error!,
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color: AppColors.error,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                        // Numeric keypad
+                        NumericKeypad(
+                          currentValue: _pin,
+                          onDigitPressed: _onDigitPressed,
+                          onBackspace: _onBackspace,
+                          onClear: _onClear,
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                    // Numeric keypad
-                    NumericKeypad(
-                      currentValue: _pin,
-                      onDigitPressed: _onDigitPressed,
-                      onBackspace: _onBackspace,
-                      onClear: _onClear,
+                        const Spacer(flex: 1),
+                      ],
                     ),
-                    const Spacer(),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         );

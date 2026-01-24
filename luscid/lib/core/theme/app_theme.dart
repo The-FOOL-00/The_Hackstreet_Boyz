@@ -1,7 +1,7 @@
 /// App theme configuration for elderly-friendly UI
 ///
 /// Uses Material 3 with large touch targets, high contrast colors,
-/// and accessible typography.
+/// and accessible typography. Based on Stitch Design System.
 library;
 
 import 'package:flutter/material.dart';
@@ -18,54 +18,55 @@ class AppTheme {
       useMaterial3: true,
       fontFamily: GoogleFonts.lexend().fontFamily,
 
-      // Color scheme
+      // Color scheme (Stitch Design)
       colorScheme: const ColorScheme.light(
         primary: AppColors.primaryBlue,
         onPrimary: AppColors.textOnPrimary,
         secondary: AppColors.accentGreen,
         onSecondary: AppColors.textOnPrimary,
-        surface: AppColors.backgroundWhite,
+        surface: AppColors.surfaceLight,
         onSurface: AppColors.textPrimary,
         error: AppColors.error,
         onError: AppColors.textOnPrimary,
       ),
 
-      // Scaffold background
-      scaffoldBackgroundColor: AppColors.backgroundBeige,
+      // Scaffold background (Stitch: light blue tint)
+      scaffoldBackgroundColor: AppColors.backgroundLight,
 
       // AppBar theme
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.backgroundBeige,
+        backgroundColor: Colors.transparent,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         centerTitle: true,
         titleTextStyle: GoogleFonts.lexend(
-          fontSize: 24,
+          fontSize: 20,
           fontWeight: FontWeight.bold,
           color: AppColors.textPrimary,
         ),
         iconTheme: const IconThemeData(size: 28, color: AppColors.textPrimary),
       ),
 
-      // Elevated button theme (large, accessible buttons)
+      // Elevated button theme (Stitch: 84px height, rounded-2xl)
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryBlue,
           foregroundColor: AppColors.textOnPrimary,
-          minimumSize: const Size(double.infinity, 72),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          minimumSize: const Size(double.infinity, 84),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
           textStyle: GoogleFonts.lexend(
-            fontSize: 20,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          elevation: 2,
+          elevation: 0,
+          shadowColor: AppColors.shadowButton,
         ),
       ),
 
-      // Outlined button theme
+      // Outlined button theme (Stitch style)
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primaryBlue,
@@ -78,7 +79,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          side: const BorderSide(color: AppColors.primaryBlue, width: 2),
+          side: const BorderSide(color: AppColors.borderBlue, width: 2),
         ),
       ),
 
@@ -95,11 +96,14 @@ class AppTheme {
         ),
       ),
 
-      // Card theme
+      // Card theme (Stitch: rounded-3xl, soft shadow)
       cardTheme: CardThemeData(
         color: AppColors.backgroundWhite,
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: AppColors.borderBlue, width: 1),
+        ),
         margin: const EdgeInsets.all(8),
       ),
 
@@ -112,19 +116,19 @@ class AppTheme {
           vertical: 18,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.borderLight),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.borderLight),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.primaryBlue, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.error, width: 2),
         ),
         labelStyle: GoogleFonts.lexend(
@@ -151,15 +155,15 @@ class AppTheme {
           fontSize: 16,
           color: AppColors.textOnPrimary,
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         behavior: SnackBarBehavior.floating,
       ),
 
       // Progress indicator theme
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: AppColors.primaryBlue,
-        linearTrackColor: AppColors.borderLight,
-        circularTrackColor: AppColors.borderLight,
+        linearTrackColor: AppColors.primarySoft,
+        circularTrackColor: AppColors.primarySoft,
       ),
 
       // Checkbox theme
@@ -171,14 +175,14 @@ class AppTheme {
           return AppColors.backgroundWhite;
         }),
         checkColor: WidgetStateProperty.all(AppColors.textOnPrimary),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         side: const BorderSide(color: AppColors.borderMedium, width: 2),
       ),
 
       // Dialog theme
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.backgroundWhite,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         titleTextStyle: GoogleFonts.lexend(
           fontSize: 24,
           fontWeight: FontWeight.bold,

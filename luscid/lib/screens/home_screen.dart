@@ -1,6 +1,6 @@
 /// Home screen with main navigation
 ///
-/// Central hub with main actions: Games, Friends, Activity, Help.
+/// Stitch Design: Header with pill badge, card-style nav buttons, decorative circles.
 library;
 
 import 'package:flutter/material.dart';
@@ -28,198 +28,289 @@ class HomeScreen extends StatelessWidget {
     final greeting = Helpers.getGreeting();
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundBeige,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
+      backgroundColor: AppColors.backgroundLight,
+      body: Stack(
+        children: [
+          // Stitch: Decorative blur circle top-right
+          Positioned(
+            top: -80,
+            right: -60,
+            child: Container(
+              width: 180,
+              height: 180,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primaryBlue.withOpacity(0.08),
+              ),
+            ),
+          ),
+          // Stitch: Decorative blur circle bottom-left
+          Positioned(
+            bottom: 100,
+            left: -80,
+            child: Container(
+              width: 160,
+              height: 160,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primarySoft.withOpacity(0.5),
+              ),
+            ),
+          ),
+          // Main content
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryBlue,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Center(
-                      child: Text('🧠', style: TextStyle(fontSize: 28)),
-                    ),
+                  // Stitch: Header with logo and pill
+                  Row(
+                    children: [
+                      // Logo container
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppColors.primaryBlue, Color(0xFF60A5FA)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primaryBlue.withOpacity(0.25),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Text('🧠', style: TextStyle(fontSize: 28)),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Luscid',
+                              style: AppTextStyles.heading3.copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            // Stitch: Pill badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primarySoft,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                'Memory Trainer',
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  color: AppColors.primaryBlue,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Notification Bell
+                      const NotificationBell(),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 24),
+                  // Stitch: Welcome card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppColors.backgroundWhite,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: AppColors.borderBlue, width: 1),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.shadowCard,
+                          blurRadius: 20,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
                       children: [
-                        Text(
-                          'Luscid',
-                          style: AppTextStyles.heading3.copyWith(
-                            color: AppColors.primaryBlue,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '$greeting! 👋',
+                                style: AppTextStyles.heading3.copyWith(
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Let\'s keep your mind active today 😊',
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        Text('Memory Trainer', style: AppTextStyles.bodySmall),
+                        // Decorative icon
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: AppColors.accentBlueLight,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Center(
+                            child: Text('✨', style: TextStyle(fontSize: 28)),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  // Notification Bell
-                  const NotificationBell(),
+                  const SizedBox(height: 20),
+                  // Main buttons
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          // Play Memory Game (Single Player)
+                          LargeButton(
+                            text: 'Memory Game',
+                            subtitle: 'Train your memory',
+                            emoji: '🧠',
+                            isPrimary: true,
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const GameModeScreen(
+                                    gameType: GameType.memory,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          // Shopping List Game
+                          LargeButton(
+                            text: 'Shopping List',
+                            subtitle: 'Remember items',
+                            emoji: '🛒',
+                            isPrimary: true,
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const GameModeScreen(
+                                    gameType: GameType.shopping,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          // Multiplayer Games
+                          LargeButton(
+                            text: 'Multiplayer Games',
+                            subtitle: 'Play with others',
+                            emoji: '🎮',
+                            isPrimary: false,
+                            onPressed: () {
+                              // Set user ID for multiplayer
+                              final gameProvider = context.read<GameProvider>();
+                              gameProvider.setCurrentUserId(
+                                authProvider.userId ??
+                                    'user_${DateTime.now().millisecondsSinceEpoch}',
+                              );
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const MultiplayerHubScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          // Play with Friends (Buddy Circle)
+                          LargeButton(
+                            text: 'Play With Friends',
+                            subtitle: 'Invite your buddies',
+                            emoji: '👥',
+                            isPrimary: false,
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const BuddyCircleScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          // Today's Activity
+                          LargeButton(
+                            text: 'Today\'s Activity',
+                            subtitle: 'Track your progress',
+                            emoji: '📅',
+                            isPrimary: false,
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const ActivityScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          // Help
+                          LargeButton(
+                            text: 'Help',
+                            subtitle: 'How to play',
+                            emoji: '❓',
+                            isPrimary: false,
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const HelpScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          // Phone Login Test
+                          LargeButton(
+                            text: 'Phone Login',
+                            subtitle: 'Test authentication',
+                            emoji: '📱',
+                            isPrimary: false,
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const PhoneAuthScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 32),
-              // Welcome message
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppColors.backgroundWhite,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('$greeting! 👋', style: AppTextStyles.heading3),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Let\'s keep your mind active today 😊',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Main buttons
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      // Play Memory Game (Single Player)
-                      LargeButton(
-                        text: 'Memory Game',
-                        emoji: '🧠',
-                        isPrimary: true,
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const GameModeScreen(
-                                gameType: GameType.memory,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      // Shopping List Game
-                      LargeButton(
-                        text: 'Shopping List Game',
-                        emoji: '🛒',
-                        isPrimary: true,
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const GameModeScreen(
-                                gameType: GameType.shopping,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      // Multiplayer Games (Choose Game, then Difficulty, then Room Code)
-                      LargeButton(
-                        text: 'Multiplayer Games',
-                        emoji: '🎮',
-                        isPrimary: false,
-                        onPressed: () {
-                          // Set user ID for multiplayer
-                          final gameProvider = context.read<GameProvider>();
-                          gameProvider.setCurrentUserId(
-                            authProvider.userId ??
-                                'user_${DateTime.now().millisecondsSinceEpoch}',
-                          );
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const MultiplayerHubScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      // Play with Friends (Buddy Circle)
-                      LargeButton(
-                        text: 'Play With Friends',
-                        emoji: '👥',
-                        isPrimary: false,
-                        onPressed: () {
-                          // Navigate to Buddy Circle to invite friends
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const BuddyCircleScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      // Today's Activity
-                      LargeButton(
-                        text: 'Today\'s Activity',
-                        emoji: '📅',
-                        isPrimary: false,
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const ActivityScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      // Help
-                      LargeButton(
-                        text: 'Help',
-                        emoji: '❓',
-                        isPrimary: false,
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const HelpScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      // Phone Login Test
-                      LargeButton(
-                        text: 'Phone Login (Test)',
-                        emoji: '📱',
-                        isPrimary: false,
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const PhoneAuthScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

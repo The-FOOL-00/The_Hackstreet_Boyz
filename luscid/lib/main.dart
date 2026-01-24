@@ -11,6 +11,7 @@ import 'providers/buddy_list_provider.dart';
 import 'providers/invite_provider.dart';
 import 'providers/shopping_list_provider.dart';
 import 'providers/notification_provider.dart';
+import 'providers/trivia_provider.dart';
 import 'services/local_storage_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/pin_entry_screen.dart';
@@ -84,6 +85,8 @@ class LuscidApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ShoppingListProvider()),
         // Notification provider for in-app notifications
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        // Trivia game provider for CineRecall
+        ChangeNotifierProvider(create: (_) => TriviaProvider()),
       ],
       child: MaterialApp(
         title: 'Luscid - Memory Game',

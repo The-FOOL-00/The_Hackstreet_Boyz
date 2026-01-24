@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Game Result Screen</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#4B9AE8", // Soft friendly blue
+              "primary-dark": "#2563EB",
+              "secondary": "#E0F2FE", // Very light blue
+              "surface-light": "#FFFFFF",
+              "surface-dark": "#1e293b",
+              "background-light": "#F0F7FF", // Subtle blue tint background
+              "background-dark": "#0f172a",
+              "text-main": "#1e293b",
+              "text-sub": "#64748b",
+            },
+            fontFamily: {
+              "display": ["Lexend", "Noto Sans", "sans-serif"]
+            },
+            borderRadius: {
+                "DEFAULT": "0.5rem", 
+                "lg": "0.75rem", 
+                "xl": "1rem", 
+                "2xl": "1.5rem",
+                "full": "9999px"
+            },
+            boxShadow: {
+                "soft": "0 4px 20px -2px rgba(75, 154, 232, 0.15)",
+                "button": "0 4px 12px rgba(75, 154, 232, 0.25)",
+            },
+            animation: {
+                'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
+                'pop': 'pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+            },
+            keyframes: {
+                fadeInUp: {
+                    '0%': { opacity: '0', transform: 'translateY(15px)' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' },
+                },
+                pop: {
+                    '0%': { transform: 'scale(0.9)', opacity: '0' },
+                    '100%': { transform: 'scale(1)', opacity: '1' },
+                }
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(600px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-text-main dark:text-gray-100 transition-colors duration-200">
+<div class="relative flex h-full min-h-screen w-full flex-col items-center justify-between overflow-x-hidden p-6 max-w-md mx-auto group/design-root">
+<div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+<span class="material-symbols-outlined absolute top-[8%] left-[8%] text-blue-200 dark:text-blue-900/40 text-4xl">celebration</span>
+<span class="material-symbols-outlined absolute top-[12%] right-[10%] text-blue-300 dark:text-blue-800/40 text-2xl">star</span>
+<span class="material-symbols-outlined absolute bottom-[20%] left-[10%] text-blue-200 dark:text-blue-900/40 text-3xl">favorite</span>
+<div class="absolute top-[15%] left-[50%] -translate-x-1/2 w-64 h-64 bg-blue-100/50 dark:bg-blue-900/10 rounded-full blur-3xl -z-10"></div>
+</div>
+<div class="h-6 w-full"></div>
+<div class="flex flex-col items-center justify-center w-full flex-1 z-10 animate-fade-in-up">
+<div class="flex flex-col items-center w-full">
+<div class="relative mb-8 group cursor-default animate-pop" style="animation-delay: 0.2s;">
+<div class="relative w-48 h-48 rounded-full overflow-hidden border-[6px] border-white dark:border-slate-700 shadow-soft bg-blue-50 dark:bg-slate-800">
+<div class="w-full h-full bg-center bg-cover transform hover:scale-105 transition-transform duration-500" data-alt="Illustration of a happy sun with sunglasses smiling warmly" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCq6wlvIWFmKXAQJhjOiUcSwTGnKqFHtpV-P_4XBpoE16T8tK8n2791Sz7SrTaPkMruHkIQhSxShyfHKNyTKO1j9S8veJVdU4bt1-pHSOvmAWsSMJ73d9mgMvGTnLZ4Zxo8vCHZ-8S5d7n5BTXeO7K2kB2fItH5r3qAxjLb4NiPjc-vA2FLAqbL8BLjeHm7BtKTeij88RLZy8AO4QmsHIHlGO2Ahzj17rc91nWSTD5PfFV8_jqqLbpDt9TXQQxk0PR6o74L9StuKMKq");'>
+</div>
+</div>
+<div class="absolute -bottom-2 right-4 bg-white dark:bg-slate-700 rounded-full p-2 shadow-md border border-blue-100 dark:border-slate-600">
+<span class="material-symbols-outlined text-primary text-3xl">verified</span>
+</div>
+</div>
+<div class="flex flex-col items-center text-center gap-3 mb-6 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm p-6 rounded-2xl w-full shadow-sm border border-blue-50 dark:border-slate-700">
+<h1 class="text-slate-800 dark:text-white tracking-tight text-[32px] font-bold leading-tight">
+                    Well done! 🎉
+                </h1>
+<p class="text-slate-500 dark:text-slate-300 text-lg font-normal leading-relaxed max-w-[260px]">
+                    Great job keeping your mind active today.
+                </p>
+<div class="mt-2 py-2 px-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">psychology</span>
+<span class="text-blue-700 dark:text-blue-200 font-medium text-sm">Daily Goal Met</span>
+</div>
+</div>
+</div>
+</div>
+<div class="w-full flex flex-col gap-3 pb-8 pt-4 z-10 animate-fade-in-up" style="animation-delay: 0.4s;">
+<button class="group flex w-full cursor-pointer items-center justify-center rounded-xl h-14 px-6 bg-primary hover:bg-blue-500 text-white text-lg font-bold shadow-button active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined mr-2 text-[24px] group-hover:rotate-180 transition-transform duration-500">replay</span>
+<span>Play Again</span>
+</button>
+<button class="flex w-full cursor-pointer items-center justify-center rounded-xl h-14 px-6 bg-white dark:bg-slate-800 border-2 border-blue-100 dark:border-slate-600 hover:border-blue-300 dark:hover:border-slate-500 text-slate-600 dark:text-slate-200 text-lg font-semibold active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined mr-2 text-[24px] text-slate-400 dark:text-slate-400">home</span>
+<span>Go Home</span>
+</button>
+</div>
+</div>
+
+</body></html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Memory Training Game</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;family=Noto+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3B82F6", 
+                        "primary-light": "#60A5FA",
+                        "primary-dark": "#2563EB",
+                        "background-light": "#F8FAFC", // Cool slate white
+                        "background-dark": "#0F172A", // Slate 900
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#1E293B",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem", 
+                        "lg": "0.75rem", 
+                        "xl": "1rem", 
+                        "2xl": "1.5rem", 
+                        "3xl": "2rem",
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(59, 130, 246, 0.1)',
+                        'card': '0 2px 4px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)',
+                        'card-active': '0 10px 25px -5px rgba(59, 130, 246, 0.25), 0 8px 10px -6px rgba(59, 130, 246, 0.1)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+            overscroll-behavior-y: none;}
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 font-body antialiased selection:bg-primary/20">
+<div class="relative flex flex-col h-screen max-h-screen w-full overflow-hidden">
+<header class="shrink-0 flex items-center justify-between px-6 pt-6 pb-2 z-10">
+<div class="size-10 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">pause</span>
+</div>
+<h2 class="text-sm font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500">Memory Fit</h2>
+<div class="size-10 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+</div>
+</header>
+<div class="shrink-0 flex flex-col items-center px-6 pt-2 pb-6">
+<h1 class="font-display text-4xl font-bold text-slate-900 dark:text-white mb-4 tracking-tight">
+            Your Turn
+        </h1>
+<div class="inline-flex items-center gap-3 pl-4 pr-5 py-2 rounded-full bg-white dark:bg-surface-dark shadow-sm border border-slate-200 dark:border-slate-700">
+<div class="flex items-center justify-center size-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-primary">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</div>
+<p class="text-slate-600 dark:text-slate-300 text-sm font-bold uppercase tracking-wide">
+                Matches: <span class="text-primary dark:text-blue-400">2</span> / 6
+            </p>
+</div>
+</div>
+<main class="flex-1 overflow-y-auto px-6 w-full max-w-md mx-auto flex flex-col justify-center pb-4">
+<div class="grid grid-cols-3 gap-4 w-full aspect-[3/4]">
+<div class="group relative w-full h-full perspective-1000">
+<div class="relative w-full h-full rounded-2xl bg-white dark:bg-surface-dark border-2 border-blue-100 dark:border-blue-900 flex items-center justify-center transition-all shadow-sm">
+<span class="material-symbols-outlined text-primary/60 dark:text-blue-400/60 text-[40px] md:text-[48px]">nutrition</span>
+<div class="absolute inset-0 rounded-2xl bg-blue-50/50 dark:bg-blue-900/20"></div>
+</div>
+</div>
+<div class="group relative w-full h-full perspective-1000">
+<div class="relative w-full h-full rounded-2xl bg-white dark:bg-surface-dark border-2 border-blue-100 dark:border-blue-900 flex items-center justify-center transition-all shadow-sm">
+<span class="material-symbols-outlined text-primary/60 dark:text-blue-400/60 text-[40px] md:text-[48px]">nutrition</span>
+<div class="absolute inset-0 rounded-2xl bg-blue-50/50 dark:bg-blue-900/20"></div>
+</div>
+</div>
+<button aria-label="Flip card" class="w-full h-full rounded-2xl bg-gradient-to-br from-[#60A5FA] to-[#3B82F6] shadow-card hover:shadow-lg active:scale-95 transition-all duration-300 flex items-center justify-center group relative overflow-hidden">
+<span class="material-symbols-outlined text-white/90 text-[32px] group-hover:scale-110 transition-transform duration-300">psychology</span>
+<div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
+</button>
+<div class="w-full h-full rounded-2xl bg-white dark:bg-surface-dark shadow-card-active border-2 border-primary flex items-center justify-center transform scale-105 transition-all z-10">
+<span class="material-symbols-outlined text-slate-800 dark:text-white text-[48px] md:text-[56px] animate-pulse">pets</span>
+</div>
+<button aria-label="Flip card" class="w-full h-full rounded-2xl bg-gradient-to-br from-[#60A5FA] to-[#3B82F6] shadow-card hover:shadow-lg active:scale-95 transition-all duration-300 flex items-center justify-center group relative overflow-hidden">
+<span class="material-symbols-outlined text-white/90 text-[32px] group-hover:scale-110 transition-transform duration-300">psychology</span>
+<div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
+</button>
+<button aria-label="Flip card" class="w-full h-full rounded-2xl bg-gradient-to-br from-[#60A5FA] to-[#3B82F6] shadow-card hover:shadow-lg active:scale-95 transition-all duration-300 flex items-center justify-center group relative overflow-hidden">
+<span class="material-symbols-outlined text-white/90 text-[32px] group-hover:scale-110 transition-transform duration-300">psychology</span>
+</button>
+<button aria-label="Flip card" class="w-full h-full rounded-2xl bg-gradient-to-br from-[#60A5FA] to-[#3B82F6] shadow-card hover:shadow-lg active:scale-95 transition-all duration-300 flex items-center justify-center group relative overflow-hidden">
+<span class="material-symbols-outlined text-white/90 text-[32px] group-hover:scale-110 transition-transform duration-300">psychology</span>
+</button>
+<button aria-label="Flip card" class="w-full h-full rounded-2xl bg-gradient-to-br from-[#60A5FA] to-[#3B82F6] shadow-card hover:shadow-lg active:scale-95 transition-all duration-300 flex items-center justify-center group relative overflow-hidden">
+<span class="material-symbols-outlined text-white/90 text-[32px] group-hover:scale-110 transition-transform duration-300">psychology</span>
+</button>
+<button aria-label="Flip card" class="w-full h-full rounded-2xl bg-gradient-to-br from-[#60A5FA] to-[#3B82F6] shadow-card hover:shadow-lg active:scale-95 transition-all duration-300 flex items-center justify-center group relative overflow-hidden">
+<span class="material-symbols-outlined text-white/90 text-[32px] group-hover:scale-110 transition-transform duration-300">psychology</span>
+</button>
+<button aria-label="Flip card" class="w-full h-full rounded-2xl bg-gradient-to-br from-[#60A5FA] to-[#3B82F6] shadow-card hover:shadow-lg active:scale-95 transition-all duration-300 flex items-center justify-center group relative overflow-hidden">
+<span class="material-symbols-outlined text-white/90 text-[32px] group-hover:scale-110 transition-transform duration-300">psychology</span>
+</button>
+<button aria-label="Flip card" class="w-full h-full rounded-2xl bg-gradient-to-br from-[#60A5FA] to-[#3B82F6] shadow-card hover:shadow-lg active:scale-95 transition-all duration-300 flex items-center justify-center group relative overflow-hidden">
+<span class="material-symbols-outlined text-white/90 text-[32px] group-hover:scale-110 transition-transform duration-300">psychology</span>
+</button>
+<button aria-label="Flip card" class="w-full h-full rounded-2xl bg-gradient-to-br from-[#60A5FA] to-[#3B82F6] shadow-card hover:shadow-lg active:scale-95 transition-all duration-300 flex items-center justify-center group relative overflow-hidden">
+<span class="material-symbols-outlined text-white/90 text-[32px] group-hover:scale-110 transition-transform duration-300">psychology</span>
+</button>
+</div>
+</main>
+<div class="shrink-0 px-6 pb-8 pt-4 z-10 w-full max-w-md mx-auto">
+<button class="w-full flex items-center justify-center gap-3 bg-white dark:bg-surface-dark hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-200 border border-slate-200 dark:border-slate-700 h-14 rounded-2xl font-semibold text-lg tracking-wide transition-all shadow-sm active:scale-[0.98] group">
+<span class="material-symbols-outlined text-[24px] text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">logout</span>
+            Exit Game
+        </button>
+</div>
+</div>
+
+</body></html>

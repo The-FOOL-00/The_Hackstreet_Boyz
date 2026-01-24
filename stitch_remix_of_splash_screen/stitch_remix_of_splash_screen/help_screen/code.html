@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Help Screen</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+            extend: {
+                colors: {
+                    "primary": "#007AFF","primary-hover": "#0056b3",
+                    "background-light": "#F0F5FA","background-dark": "#0f172a",
+                    "surface-light": "#ffffff",
+                    "surface-dark": "#1e293b",
+                    "accent-blue": "#E1F0FF",
+                },
+                fontFamily: {
+                    "display": ["Lexend", "sans-serif"]
+                },
+                borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px"},
+                boxShadow: {
+                    "soft": "0 4px 20px -2px rgba(173, 193, 217, 0.25)",
+                    "card": "0 2px 10px rgba(0, 0, 0, 0.03)",
+                }
+            },
+            },
+        }
+    </script>
+<style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+            min-height: max(884px, 100dvh);
+        }html {
+            scroll-behavior: smooth;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-800 dark:text-slate-100 antialiased selection:bg-primary selection:text-white">
+<div class="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden">
+<div class="sticky top-0 z-30 flex items-center justify-between bg-background-light/95 dark:bg-background-dark/95 px-4 py-3 backdrop-blur-md border-b border-blue-100/50 dark:border-slate-800">
+<button aria-label="Go back" class="flex size-10 shrink-0 items-center justify-center rounded-full bg-white dark:bg-slate-800 text-primary dark:text-blue-400 shadow-sm active:scale-95 transition-all duration-200 border border-blue-50 dark:border-slate-700">
+<span class="material-symbols-outlined" style="font-size: 24px;">arrow_back</span>
+</button>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-10">Help Center</h2>
+</div>
+<main class="flex-1 px-5 pb-40 max-w-lg mx-auto w-full">
+<div class="pt-6 pb-8 text-center">
+<div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 text-primary dark:text-blue-300">
+<span class="material-symbols-outlined" style="font-size: 32px;">support_agent</span>
+</div>
+<h1 class="text-slate-900 dark:text-white tracking-tight text-3xl font-bold leading-tight mb-3">How can we help?</h1>
+<p class="text-slate-500 dark:text-slate-400 text-lg font-medium leading-relaxed max-w-[280px] mx-auto">
+                    Simple guides to help you enjoy your daily training.
+                </p>
+</div>
+<div class="flex flex-col gap-5">
+<button class="group w-full text-left focus:outline-none">
+<div class="relative flex items-center justify-between gap-5 rounded-2xl bg-surface-light dark:bg-surface-dark p-5 shadow-card hover:shadow-soft ring-1 ring-blue-50 dark:ring-white/5 transition-all duration-300 active:scale-[0.98]">
+<div class="flex flex-col justify-center gap-1.5 flex-1 min-w-0">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary" style="font-size: 24px;">videogame_asset</span>
+<h3 class="text-slate-900 dark:text-white text-lg font-bold leading-tight truncate">How to Play</h3>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-[15px] font-normal leading-relaxed">
+                                Learn the basic rules to start having fun immediately.
+                            </p>
+</div>
+<div class="w-20 h-20 shrink-0 overflow-hidden rounded-xl border border-blue-50 dark:border-slate-700 bg-accent-blue dark:bg-slate-800">
+<div aria-label="Puzzle pieces illustration" class="w-full h-full bg-center bg-no-repeat bg-cover opacity-90 mix-blend-multiply dark:mix-blend-normal" role="img" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuChT2VNRtwTOPi6TaCwKxrSeIblx7LhcimL_T4RBa7MLBRpUsM2zmmdvC3j50ToU03bY9PFJsS0ujusYHV-SZSKt0TyIVDqTSs1a6uQXK416gquK2GXAdAxZTvCRqPvcKwvQxPccj_amapRJXQRiTmKCwIktvirMLa-86HVjrDWev_Plu_0X3y3qgqrjBRBmCk3LWHyTMO2RS6ySbdlnkd2LSziPvQKDXSoDb0I8FmGpFlFes2SZXNnOn92ZS1D4WSurEol6P_pqtFB");'>
+</div>
+</div>
+</div>
+</button>
+<button class="group w-full text-left focus:outline-none">
+<div class="relative flex items-center justify-between gap-5 rounded-2xl bg-surface-light dark:bg-surface-dark p-5 shadow-card hover:shadow-soft ring-1 ring-blue-50 dark:ring-white/5 transition-all duration-300 active:scale-[0.98]">
+<div class="flex flex-col justify-center gap-1.5 flex-1 min-w-0">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary" style="font-size: 24px;">diversity_3</span>
+<h3 class="text-slate-900 dark:text-white text-lg font-bold leading-tight truncate">Family Mode</h3>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-[15px] font-normal leading-relaxed">
+                                Connect and play together with grandchildren or friends.
+                            </p>
+</div>
+<div class="w-20 h-20 shrink-0 overflow-hidden rounded-xl border border-blue-50 dark:border-slate-700 bg-accent-blue dark:bg-slate-800">
+<div aria-label="Family playing illustration" class="w-full h-full bg-center bg-no-repeat bg-cover opacity-90 mix-blend-multiply dark:mix-blend-normal" role="img" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBc92twSVi5P3ZgOMNDSTbV82aKxBbNqWTZj-1O-uiFBD1lTAc5ehQm8MUXzFRGTW4dC16Pbhy_jfRblCkmRtcShqvA5dpepzABX0MHXG7QcmKFkh5vicRK9lsPcHnEYOWTsa82gnJYTfTvgfdWZYOyvLDW8TMkc2RySjyORKHVk7Pvn7fPFtXLpPDajZ0z7i00hPLX1PpHHjtd8BVM8aGhvwLONFEac_7liWXvuV5hzHQ8vGZdOAwohBs_MpfLjryz-WfR7D3qGeKa");'>
+</div>
+</div>
+</div>
+</button>
+<button class="group w-full text-left focus:outline-none">
+<div class="relative flex items-center justify-between gap-5 rounded-2xl bg-surface-light dark:bg-surface-dark p-5 shadow-card hover:shadow-soft ring-1 ring-blue-50 dark:ring-white/5 transition-all duration-300 active:scale-[0.98]">
+<div class="flex flex-col justify-center gap-1.5 flex-1 min-w-0">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary" style="font-size: 24px;">psychology</span>
+<h3 class="text-slate-900 dark:text-white text-lg font-bold leading-tight truncate">Why this helps</h3>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-[15px] font-normal leading-relaxed">
+                                See how these activities strengthen your memory daily.
+                            </p>
+</div>
+<div class="w-20 h-20 shrink-0 overflow-hidden rounded-xl border border-blue-50 dark:border-slate-700 bg-accent-blue dark:bg-slate-800">
+<div aria-label="Lightbulb illustration" class="w-full h-full bg-center bg-no-repeat bg-cover opacity-90 mix-blend-multiply dark:mix-blend-normal" role="img" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuByV7aYmyCR7LygxLaQQKXW3BkDvj_XPwqnPynoMz3FmlFktNczxsztSRert6g8JJtfbziMZtcWskGrpiMWNuEmsBEBR5fuIkETMBPdOYAVyR4eqsIGC_t3GXo8bo4fwSzJ2OvrQOdaU8N_jJhfWrpFVYuEiJBkYuKOnSUIhiL1SGZ9f1BK6pbhZLCOCiMDnyXW24PTKibgq93zNfi-yfzuQgAVBqwenFt2N70VlZWUelRBjpsaEXQNYiwfyCshCN3v1AHLfel6kGWs");'>
+</div>
+</div>
+</div>
+</button>
+</div>
+</main>
+<div class="fixed bottom-0 z-20 w-full p-4 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-lg border-t border-blue-100/50 dark:border-slate-800 pb-8">
+<div class="max-w-lg mx-auto">
+<button class="w-full rounded-2xl bg-primary py-4 px-6 text-white shadow-lg shadow-blue-500/25 transition-transform active:scale-[0.98] hover:bg-primary-hover focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-900">
+<span class="text-lg font-bold tracking-wide">Back to Home</span>
+</button>
+</div>
+</div>
+</div>
+
+</body></html>

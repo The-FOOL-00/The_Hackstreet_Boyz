@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LUCID - Daily Memory Training</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#3B7CD9", // Calmer, solid blue
+                        "primary-dark": "#2A62B3", 
+                        "background-beige": "#F7F5F2", // Warm beige
+                        "surface-white": "#FFFFFF",
+                        "text-main": "#1F2937",
+                        "text-sub": "#4B5563",
+                    },
+                    fontFamily: {
+                        display: ["Lexend", "sans-serif"],
+                        body: ["Noto Sans", "sans-serif"],
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(59, 124, 217, 0.15)',
+                        'button': '0 10px 25px -5px rgba(59, 124, 217, 0.4)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>*:focus-visible {
+            outline: 4px solid #3B7CD9;
+            outline-offset: 4px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-beige text-text-main font-display antialiased h-[100dvh] w-full overflow-hidden flex flex-col relative selection:bg-primary/20">
+<div class="absolute top-0 left-0 w-full h-48 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none z-0"></div>
+<div class="flex-1 flex flex-col justify-between w-full max-w-md mx-auto px-6 py-8 md:py-12 z-10 relative h-full">
+<header class="flex flex-col items-center text-center space-y-3 pt-2">
+<h1 class="text-primary text-[52px] font-extrabold tracking-tight leading-none drop-shadow-sm">LUCID</h1>
+<div class="space-y-1">
+<h2 class="text-2xl font-bold text-text-main tracking-wide">Daily Memory Training</h2>
+<p class="text-lg text-text-sub font-medium leading-relaxed">Sharpen your mind every day.</p>
+</div>
+</header>
+<main class="flex-1 flex items-center justify-center py-6 w-full">
+<div class="relative w-full aspect-square max-w-[340px] rounded-[2rem] overflow-hidden shadow-2xl border-[6px] border-white bg-white ring-1 ring-black/5 transform transition-transform duration-500 hover:scale-[1.01]">
+<div aria-label="Happy diverse seniors playing a board game together in a warm, sunny living room" class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDOXR9xFZdChte_7DRnBW0FOvlhOmiWICyAfXQu-5_1-PAXzHSg9sjfd-6M7kqIvlAaCFNswguyEJzoTAvVDu46gAXcSMafdepU3v6w7Gvr6ZKgXiX8zzfo9hthQ5nDAhJjyUW4OEklw12oZSnd8YbY8ttFI3EkX7f0izRF4WsAXCiXD66CKkmdDnoQrN91XGm4wLqWJzzv62Q539Y-f54Me403bKL_M79XXnG_-4Pcdc-TwLLaXPvvjd7ElTmmE0JyRs0iUnyZi1UX');"></div>
+<div class="absolute inset-0 border border-black/5 rounded-[1.7rem] pointer-events-none"></div>
+</div>
+</main>
+<footer class="flex flex-col w-full pb-4 gap-6">
+<button class="group relative w-full bg-primary hover:bg-primary-dark active:scale-[0.98] transition-all duration-200 text-white h-[84px] rounded-2xl shadow-button flex items-center justify-between px-8 text-[22px] font-bold tracking-wide overflow-hidden">
+<div class="absolute bottom-0 left-0 w-full h-1 bg-black/10 pointer-events-none"></div>
+<span class="pl-2">Start Training</span>
+<div class="flex items-center justify-center w-12 h-12 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+<span class="material-symbols-outlined text-[32px]">arrow_forward</span>
+</div>
+</button>
+<div class="flex items-center justify-center gap-2.5 bg-white/80 backdrop-blur-sm py-3 px-5 rounded-full mx-auto border border-white shadow-sm w-fit">
+<span class="material-symbols-outlined text-primary text-[20px]">verified_user</span>
+<span class="text-text-sub font-semibold text-sm tracking-wide">Science-backed exercises</span>
+</div>
+</footer>
+</div>
+
+</body></html>

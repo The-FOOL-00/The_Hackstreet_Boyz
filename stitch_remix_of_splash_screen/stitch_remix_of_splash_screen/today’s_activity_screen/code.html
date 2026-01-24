@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Today's Activity Screen</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        // Updated to Light Blue Tones as requested
+                        "primary": "#3b82f6", // Blue 500 - Clear, standard accessible blue
+                        "primary-dark": "#2563eb", // Blue 600
+                        "primary-light": "#eff6ff", // Blue 50
+                        "background-light": "#f0f9ff", // Very subtle blue tint for freshness
+                        "background-dark": "#0f172a", // Slate 900
+                        "card-light": "#ffffff",
+                        "card-dark": "#1e293b",
+                        "text-main-light": "#1e293b", // Slate 800
+                        "text-main-dark": "#f1f5f9", // Slate 100
+                        "text-sub-light": "#64748b", // Slate 500
+                        "text-sub-dark": "#94a3b8", // Slate 400
+                        "success-bg": "#dcfce7", // Soft Green 100
+                        "success-bg-dark": "#064e3b", // Emerald 900
+                        "success-text": "#166534", // Green 800
+                        "success-text-dark": "#d1fae5", // Emerald 100
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        .large-touch-target {
+            min-height: 56px;
+        }.activity-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased min-h-screen flex flex-col items-center">
+<div class="w-full max-w-md bg-background-light dark:bg-background-dark min-h-screen relative flex flex-col pb-28">
+<header class="px-6 pt-8 pb-4">
+<div class="flex items-center justify-between mb-8">
+<button aria-label="Menu" class="p-2 -ml-2 rounded-full text-text-main-light dark:text-text-main-dark hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-3xl">menu</span>
+</button>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-3xl filled">spa</span>
+<span class="text-text-main-light dark:text-text-main-dark font-bold text-xl tracking-tight">Mindful</span>
+</div>
+<button aria-label="Profile" class="p-1 -mr-1 rounded-full border-2 border-transparent hover:border-primary transition-colors">
+<img class="w-10 h-10 rounded-full object-cover border border-slate-200" data-alt="Senior woman portrait smiling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHNPjM59cIhOuC48e87AWDmR8vKSHcJwa6ls9JgM5o1Aq7Cly7P5WaC33Tge33N75P9UN1b86W6ZHDHeHD2wle49xV-Z7q6VkbUFZXu3Xafo_mbg7hBcrIgd_Wj94RXbWs-KlUYfLi4qYyj-FDMh5QBqI0mQjPJ-GczHzxUNsGTmzTDG4lNfiUbFx80hJslDpBjqoZtyzO7TMlh4KHQo_B32rQ-yyxFkqWstFhU7pW8fiS5GgrdQUIV9fKXFxE9EwT0VfAGoMty_tF"/>
+</button>
+</div>
+<div class="flex flex-col gap-1">
+<h1 class="text-text-main-light dark:text-text-main-dark text-3xl font-bold tracking-tight">
+                Good Morning, Martha
+            </h1>
+<div class="flex items-center gap-2 text-primary font-medium mt-1">
+<span class="material-symbols-outlined text-xl">calendar_today</span>
+<span>Wednesday, Oct 25</span>
+</div>
+</div>
+</header>
+<section class="px-6 mb-6">
+<div class="bg-card-light dark:bg-card-dark p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
+<div class="flex justify-between items-center mb-4">
+<div>
+<p class="text-text-sub-light dark:text-text-sub-dark text-xs font-bold uppercase tracking-wider mb-1">Daily Goals</p>
+<div class="flex items-baseline gap-2">
+<p class="text-text-main-light dark:text-text-main-dark text-3xl font-bold">1/3</p>
+<p class="text-text-sub-light dark:text-text-sub-dark text-base">completed</p>
+</div>
+</div>
+<div class="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-2xl filled">trophy</span>
+</div>
+</div>
+<div class="h-3 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-500 ease-out" style="width: 33%"></div>
+</div>
+</div>
+</section>
+<main class="flex flex-col gap-5 px-6 flex-1">
+<h3 class="text-text-main-light dark:text-text-main-dark text-xl font-bold pl-1">Your Checklist</h3>
+<div class="activity-card group bg-card-light dark:bg-card-dark rounded-3xl overflow-hidden shadow-sm hover:shadow-md border border-slate-200 dark:border-slate-700">
+<div class="h-36 w-full relative">
+<img alt="Jigsaw puzzle" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKCuCvGuRwYEfy_rm7HExB2_XzL50IIp4V0eBFwe2akzSQQo4_xN1rg48Aluv9Q0fSc4W2BwEy5CW2Yx77q6iv8qcsdHTx9BDnd_GF7nYqhrcoPrWw-LWazKLk2uEj7lD9Ny8Zi2W7JCsaavOQ9cC610dEak_2SzPNaFF_vFGJuhYPtzNpQiyvdBYdI8jPnuHzpnokTf92-hMinc8Xa9CfDg7itK1a2mWG-CMCqIOJeW4GkUAgPBXqVmX4mCdQjaNntgx7gn8j_YZC"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+<div class="absolute bottom-3 left-4 text-white flex items-center gap-2">
+<span class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold border border-white/30 flex items-center gap-1 uppercase tracking-wide">
+<span class="material-symbols-outlined text-sm">psychology</span> Cognitive
+                    </span>
+</div>
+</div>
+<div class="p-5 flex flex-col gap-4">
+<div>
+<h4 class="text-xl font-bold text-text-main-light dark:text-text-main-dark mb-1">Play memory game</h4>
+<p class="text-text-sub-light dark:text-text-sub-dark text-base leading-relaxed">Keep your mind sharp with a quick puzzle.</p>
+</div>
+<button class="w-full large-touch-target bg-primary hover:bg-primary-dark text-white rounded-xl font-bold text-lg shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+<div class="w-6 h-6 rounded-full border-2 border-white/60 flex items-center justify-center group-hover:bg-white/20"></div>
+                    Mark as Done
+                </button>
+</div>
+</div>
+<div class="activity-card bg-success-bg dark:bg-success-bg-dark rounded-3xl overflow-hidden shadow-none border border-green-200 dark:border-green-800">
+<div class="p-5 flex flex-col gap-3">
+<div class="flex items-center gap-4">
+<div class="bg-white dark:bg-green-900/40 p-3 rounded-2xl text-success-text dark:text-green-300 shadow-sm shrink-0">
+<span class="material-symbols-outlined text-3xl filled">water_drop</span>
+</div>
+<div class="flex-1">
+<h4 class="text-lg font-bold text-success-text dark:text-green-100 mb-0.5 line-through decoration-green-600/40">Drink water</h4>
+<p class="text-success-text/80 dark:text-green-200/80 text-sm font-medium">Completed at 9:30 AM</p>
+</div>
+<div class="bg-green-600 dark:bg-green-500 text-white p-2 rounded-full shadow-sm">
+<span class="material-symbols-outlined text-xl font-bold">check</span>
+</div>
+</div>
+<button class="w-full py-2 bg-white/50 dark:bg-black/10 text-success-text dark:text-green-100 rounded-lg font-semibold text-sm transition-colors hover:bg-white/80 flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-lg">undo</span> Undo
+                </button>
+</div>
+</div>
+<div class="activity-card group bg-card-light dark:bg-card-dark rounded-3xl overflow-hidden shadow-sm hover:shadow-md border border-slate-200 dark:border-slate-700">
+<div class="h-36 w-full relative">
+<img alt="Walking shoes" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3TjQtk_uxiUL6hDRFtXPdg6uRumAg9k5z0ETOEZVSm1vjd57BCJjovaMXmmGLGB_-ApolhUBWuFs-jD8okOnHAhCTEGJ-k9GsQCVfME8gnh4t2vlZyfqcWhA4rkJskgSljyip3NbcXq15zqwbw7ZkmQsyXBVyd2vaGlnR8I5ek-wm1OWRlscbW_TSqD5NhvFdS3_STiqhTnOKxq2uTSQFL7nFEeBO7FXDmMBS4Dm23P4HoH-fT2RSkl3UoaKBOR_ISP_FLgXiQaPU"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+<div class="absolute bottom-3 left-4 text-white flex items-center gap-2">
+<span class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold border border-white/30 flex items-center gap-1 uppercase tracking-wide">
+<span class="material-symbols-outlined text-sm">directions_walk</span> Physical
+                    </span>
+</div>
+</div>
+<div class="p-5 flex flex-col gap-4">
+<div>
+<h4 class="text-xl font-bold text-text-main-light dark:text-text-main-dark mb-1">Walk for 5 minutes</h4>
+<p class="text-text-sub-light dark:text-text-sub-dark text-base leading-relaxed">Get some fresh air outside.</p>
+</div>
+<button class="w-full large-touch-target bg-primary hover:bg-primary-dark text-white rounded-xl font-bold text-lg shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+<div class="w-6 h-6 rounded-full border-2 border-white/60 flex items-center justify-center group-hover:bg-white/20"></div>
+                    Mark as Done
+                </button>
+</div>
+</div>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-card-light/90 dark:bg-card-dark/90 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 px-6 py-3 pb-6 flex justify-around items-center z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-2xl filled">home</span>
+<span class="text-[10px] font-bold uppercase tracking-wide">Today</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-text-sub-light dark:text-text-sub-dark hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">bar_chart</span>
+<span class="text-[10px] font-bold uppercase tracking-wide">Progress</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-text-sub-light dark:text-text-sub-dark hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">settings</span>
+<span class="text-[10px] font-bold uppercase tracking-wide">Settings</span>
+</button>
+</nav>
+</div>
+
+</body></html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Single Player Setup</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#3B82F6", // Lighter blue for primary action as requested
+              "primary-dark": "#2563EB",
+              "accent-blue": "#E0F2FE", // Very light blue for backgrounds
+              "background-light": "#F0F9FF", // Light blue tinted background
+              "background-dark": "#0F172A",
+              "surface-light": "#ffffff",
+              "surface-dark": "#1E293B",
+              "text-main": "#0f172a",
+              "text-sub": "#475569",
+            },
+            fontFamily: {
+              "display": ["Lexend", "sans-serif"]
+            },
+            borderRadius: {
+              "DEFAULT": "0.375rem", 
+              "md": "0.5rem",      // More structured, less fluid
+              "lg": "0.75rem", 
+              "xl": "1rem",        // Slightly tighter than before
+              "full": "9999px"
+            },
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-text-main dark:text-[#fcfaf8] font-display antialiased min-h-screen flex flex-col">
+<div class="sticky top-0 z-10 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm border-b border-blue-100 dark:border-slate-700">
+<div class="flex items-center p-4 justify-between h-16">
+<button aria-label="Go back" class="flex items-center justify-center size-12 shrink-0 rounded-lg hover:bg-blue-100 dark:hover:bg-white/10 active:bg-blue-200 dark:active:bg-white/20 transition-colors">
+<span class="material-symbols-outlined text-[32px] font-bold text-text-main dark:text-[#fcfaf8]">arrow_back</span>
+</button>
+<h1 class="text-xl font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12 text-text-main dark:text-[#fcfaf8]">Single Player</h1>
+</div>
+</div>
+<main class="flex-1 flex flex-col p-4 w-full max-w-md mx-auto">
+<div class="pt-4 pb-8">
+<h2 class="text-text-main dark:text-[#fcfaf8] tracking-tight text-[28px] font-bold leading-tight text-center">Select Difficulty</h2>
+<p class="text-text-sub dark:text-slate-400 text-center mt-2 text-lg">Choose a level that feels right for you today.</p>
+</div>
+<div class="flex flex-col gap-4 flex-1">
+<label class="group relative cursor-pointer block">
+<input checked="" class="peer sr-only" name="difficulty" type="radio" value="easy"/>
+<div class="flex items-center gap-5 p-5 rounded-lg bg-surface-light dark:bg-surface-dark shadow-sm border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20 transition-all duration-200 hover:border-blue-300">
+<div class="size-16 rounded-md bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0 border border-blue-200 dark:border-blue-800">
+<span class="material-symbols-outlined text-blue-700 dark:text-blue-300 text-[36px]">grid_view</span>
+</div>
+<div class="flex flex-col flex-1">
+<span class="text-xl font-bold text-text-main dark:text-white leading-tight mb-1">Easy</span>
+<span class="text-text-sub dark:text-slate-300 text-lg font-medium">4 Cards (2x2)</span>
+</div>
+<div class="size-8 rounded-md bg-primary text-white items-center justify-center hidden peer-checked:flex shadow-sm">
+<span class="material-symbols-outlined text-[20px] font-bold">check</span>
+</div>
+<div class="size-8 rounded-md border-2 border-slate-300 dark:border-slate-600 hidden peer-checked:hidden group-hover:border-blue-300 flex items-center justify-center">
+</div>
+</div>
+</label>
+<label class="group relative cursor-pointer block">
+<input class="peer sr-only" name="difficulty" type="radio" value="medium"/>
+<div class="flex items-center gap-5 p-5 rounded-lg bg-surface-light dark:bg-surface-dark shadow-sm border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20 transition-all duration-200 hover:border-blue-300">
+<div class="size-16 rounded-md bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0 border border-blue-200 dark:border-blue-800">
+<span class="material-symbols-outlined text-blue-700 dark:text-blue-300 text-[36px]">grid_4x4</span>
+</div>
+<div class="flex flex-col flex-1">
+<span class="text-xl font-bold text-text-main dark:text-white leading-tight mb-1">Medium</span>
+<span class="text-text-sub dark:text-slate-300 text-lg font-medium">16 Cards (4x4)</span>
+</div>
+<div class="size-8 rounded-md bg-primary text-white items-center justify-center hidden peer-checked:flex shadow-sm">
+<span class="material-symbols-outlined text-[20px] font-bold">check</span>
+</div>
+<div class="size-8 rounded-md border-2 border-slate-300 dark:border-slate-600 hidden peer-checked:hidden group-hover:border-blue-300 flex items-center justify-center">
+</div>
+</div>
+</label>
+<label class="group relative cursor-pointer block">
+<input class="peer sr-only" name="difficulty" type="radio" value="hard"/>
+<div class="flex items-center gap-5 p-5 rounded-lg bg-surface-light dark:bg-surface-dark shadow-sm border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20 transition-all duration-200 hover:border-blue-300">
+<div class="size-16 rounded-md bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0 border border-blue-200 dark:border-blue-800">
+<span class="material-symbols-outlined text-blue-700 dark:text-blue-300 text-[36px]">apps</span>
+</div>
+<div class="flex flex-col flex-1">
+<span class="text-xl font-bold text-text-main dark:text-white leading-tight mb-1">Hard</span>
+<span class="text-text-sub dark:text-slate-300 text-lg font-medium">36 Cards (6x6)</span>
+</div>
+<div class="size-8 rounded-md bg-primary text-white items-center justify-center hidden peer-checked:flex shadow-sm">
+<span class="material-symbols-outlined text-[20px] font-bold">check</span>
+</div>
+<div class="size-8 rounded-md border-2 border-slate-300 dark:border-slate-600 hidden peer-checked:hidden group-hover:border-blue-300 flex items-center justify-center">
+</div>
+</div>
+</label>
+</div>
+<div class="sticky bottom-0 pt-6 pb-8 bg-gradient-to-t from-background-light via-background-light to-transparent dark:from-background-dark dark:via-background-dark">
+<button class="w-full bg-primary hover:bg-primary-dark active:bg-blue-800 text-white text-xl font-bold py-5 rounded-lg shadow-md transform transition-transform active:scale-[0.98] flex items-center justify-center gap-3">
+<span class="material-symbols-outlined text-[28px]">play_arrow</span>
+                START GAME
+            </button>
+</div>
+</main>
+
+</body></html>

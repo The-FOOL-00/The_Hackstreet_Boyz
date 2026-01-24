@@ -238,7 +238,8 @@ class _GameScreenState extends State<GameScreen> {
                               ),
                             )
                           else
-                            _buildVoiceChatButton(),
+                            // Placeholder for symmetry in multiplayer
+                            const SizedBox(width: 48),
                         ],
                       ),
                     ),
@@ -294,9 +295,18 @@ class _GameScreenState extends State<GameScreen> {
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
+                        ],
+                      ),
+                    ),
+                  // Floating mic button (bottom center)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 24,
+                    child: Center(
+                      child: _buildVoiceChatButton(),
+                    ),
+                  ),
             ],
           ),
         );
@@ -308,42 +318,31 @@ class _GameScreenState extends State<GameScreen> {
     final isConnected = _voiceChat?.isConnected ?? false;
     final isMuted = _voiceChat?.isMuted ?? true;
 
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: !isConnected
-            ? AppColors.backgroundWhite
-            : isMuted
-                ? const Color(0xFFFFEBEE)
-                : const Color(0xFFE8F5E9),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: !isConnected
-              ? AppColors.borderBlue
+    // Larger, accessible floating mic button for seniors
+    return SizedBox(
+      width: 72,
+      height: 72,
+      child: ElevatedButton(
+        onPressed: isConnected ? () => _voiceChat?.toggleMute() : null,
+        style: ElevatedButton.styleFrom(
+          shape: const CircleBorder(),
+          backgroundColor: !isConnected
+              ? AppColors.backgroundWhite
               : isMuted
-                  ? const Color(0xFFE53935)
-                  : const Color(0xFF4CAF50),
+                  ? const Color(0xFFFFEBEE)
+                  : const Color(0xFFE8F5E9),
+          elevation: 8,
+          padding: EdgeInsets.zero,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowSoft,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: IconButton(
-        icon: Icon(
+        child: Icon(
           isMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
+          size: 36,
           color: !isConnected
               ? AppColors.textSecondary
               : isMuted
                   ? const Color(0xFFE53935)
                   : const Color(0xFF4CAF50),
         ),
-        onPressed: isConnected ? () => _voiceChat?.toggleMute() : null,
-        tooltip: isMuted ? 'Unmute' : 'Mute',
       ),
     );
   }

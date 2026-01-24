@@ -98,11 +98,21 @@ class SignalingService {
 
   /// Get list of current participants in the room
   Future<List<String>> getParticipants() async {
-    final snapshot = await _participantsRef.get();
-    if (!snapshot.exists) return [];
-
-    final data = Map<String, dynamic>.from(snapshot.value as Map);
-    return data.keys.where((id) => id != userId).toList();
+    try {
+      final snapshot = await _participantsRef.get();
+      if (!snapshot.exists || snapshot.value == null) return [];
+      
+      // Handle different data types from Firebase
+      final value = snapshot.value;
+      if (value is Map) {
+        final data = Map<String, dynamic>.from(value);
+        return data.keys.where((id) => id != userId).toList();
+      }
+      return [];
+    } catch (e) {
+      print('SignalingService: Error getting participants: $e');
+      return [];
+    }
   }
 
   /// Listen for new participants joining

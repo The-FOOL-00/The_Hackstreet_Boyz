@@ -109,19 +109,20 @@
     },
     
     // Voice rooms for WebRTC P2P signaling
+    // Open access since app uses local auth, not Firebase Auth
     "voice_rooms": {
       "$roomId": {
-        ".read": "auth != null",
-        ".write": "auth != null",
+        ".read": true,
+        ".write": true,
         "participants": {
           "$userId": {
-            ".read": "auth != null",
-            ".write": "auth != null && auth.uid == $userId"
+            ".read": true,
+            ".write": true
           }
         },
         "signals": {
-          ".read": "auth != null",
-          ".write": "auth != null"
+          ".read": true,
+          ".write": true
         }
       }
     }

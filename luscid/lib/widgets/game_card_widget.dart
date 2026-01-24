@@ -1,6 +1,6 @@
 /// Game card widget with flip animation
 ///
-/// Animated card for memory match game with smooth 500ms rotation.
+/// Stitch Design: Gradient back, rounded-2xl, psychology icon, smooth 500ms flip.
 library;
 
 import 'dart:math' as math;
@@ -36,7 +36,7 @@ class _GameCardWidgetState extends State<GameCardWidget>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
     _animation = Tween<double>(
@@ -103,64 +103,103 @@ class _GameCardWidgetState extends State<GameCardWidget>
     );
   }
 
+  /// Stitch: Revealed card - white bg, blue border, light overlay
   Widget _buildFrontSide() {
+    final isMatched = widget.card.isMatched;
+
     return Container(
       width: widget.size,
       height: widget.size,
       decoration: BoxDecoration(
-        color: widget.card.isMatched
-            ? AppColors.accentGreen.withOpacity(0.2)
-            : AppColors.cardFront,
-        borderRadius: BorderRadius.circular(12),
+        color: isMatched ? AppColors.accentGreen.withOpacity(0.15) : AppColors.cardFront,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: widget.card.isMatched
-              ? AppColors.accentGreen
-              : AppColors.borderMedium,
+          color: isMatched ? AppColors.accentGreen : AppColors.cardBorder,
           width: 2,
         ),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
+          if (isMatched)
+            BoxShadow(
+              color: AppColors.accentGreen.withOpacity(0.2),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            )
+          else
+            BoxShadow(
+              color: AppColors.shadowSoft,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
         ],
       ),
-      child: Center(
-        child: Text(
-          widget.card.symbol,
-          style: TextStyle(fontSize: widget.size * 0.5),
-        ),
+      child: Stack(
+        children: [
+          // Light blue overlay (Stitch: bg-blue-50/50)
+          if (!isMatched)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.cardRevealedBg.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          // Symbol
+          Center(
+            child: Text(
+              widget.card.symbol,
+              style: TextStyle(fontSize: widget.size * 0.45),
+            ),
+          ),
+        ],
       ),
     );
   }
 
+  /// Stitch: Card back - gradient blue, psychology icon
   Widget _buildBackSide() {
     return Container(
       width: widget.size,
       height: widget.size,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.primaryBlue, AppColors.primaryBlueDark],
+          colors: [AppColors.cardBackGradientStart, AppColors.cardBackGradientEnd],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primaryBlueDark, width: 2),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
+            color: AppColors.primaryBlue.withOpacity(0.25),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Center(
-        child: Icon(
-          Icons.psychology,
-          size: widget.size * 0.4,
-          color: AppColors.textOnPrimary.withOpacity(0.8),
-        ),
+      child: Stack(
+        children: [
+          // Hover overlay effect
+          Positioned.fill(
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: null, // Parent handles tap
+                splashColor: Colors.white.withOpacity(0.2),
+                highlightColor: Colors.white.withOpacity(0.1),
+              ),
+            ),
+          ),
+          // Psychology icon (Stitch style)
+          Center(
+            child: Icon(
+              Icons.psychology_rounded,
+              size: widget.size * 0.35,
+              color: Colors.white.withOpacity(0.9),
+            ),
+          ),
+        ],
       ),
     );
   }

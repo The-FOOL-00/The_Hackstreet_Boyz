@@ -1,6 +1,6 @@
 /// Game screen for memory match gameplay
 ///
-/// Displays the card grid and handles game interactions.
+/// Stitch Design: Stats bar with dividers, turn indicator pill, rounded cards.
 library;
 
 import 'package:flutter/material.dart';
@@ -9,7 +9,9 @@ import '../core/constants/colors.dart';
 import '../core/constants/text_styles.dart';
 import '../providers/game_provider.dart';
 import '../providers/activity_provider.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/game_card_widget.dart';
+import '../voice_chat/voice_chat_service.dart';
 import 'result_screen.dart';
 
 class GameScreen extends StatefulWidget {
@@ -21,6 +23,7 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   bool _isListening = false;
+  VoiceChatService? _voiceChat;
 
   @override
   void initState() {
@@ -29,8 +32,30 @@ class _GameScreenState extends State<GameScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _checkGameComplete();
+        _initVoiceChat();
       }
     });
+  }
+
+  void _initVoiceChat() {
+    final gameProvider = context.read<GameProvider>();
+    final authProvider = context.read<AuthProvider>();
+    final room = gameProvider.room;
+    final currentUserId = authProvider.userId;
+    
+    if (gameProvider.isMultiplayer && room != null && currentUserId != null) {
+      _voiceChat = VoiceChatService(
+        roomId: room.roomCode,
+        userId: currentUserId,
+        userName: authProvider.user?.displayName ?? 'Player',
+      );
+      _voiceChat!.joinRoom();
+      _voiceChat!.addListener(_onVoiceChatChanged);
+    }
+  }
+
+  void _onVoiceChatChanged() {
+    if (mounted) setState(() {});
   }
 
   void _checkGameComplete() {
@@ -60,6 +85,9 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   void dispose() {
+    _voiceChat?.removeListener(_onVoiceChatChanged);
+    _voiceChat?.leaveRoom();
+    _voiceChat?.dispose();
     if (_isListening) {
       try {
         final gameProvider = context.read<GameProvider>();
@@ -82,19 +110,31 @@ class _GameScreenState extends State<GameScreen> {
         // Show loading if cards are empty (waiting for sync)
         if (cards.isEmpty || gridSize == 0) {
           return Scaffold(
-            backgroundColor: AppColors.backgroundBeige,
-            appBar: AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              title: Text('Memory Game', style: AppTextStyles.heading4),
-            ),
-            body: const Center(
+            backgroundColor: AppColors.backgroundLight,
+            body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Loading game...'),
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySoft,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryBlue),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Loading game...',
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -102,127 +142,257 @@ class _GameScreenState extends State<GameScreen> {
         }
 
         return Scaffold(
-          backgroundColor: AppColors.backgroundBeige,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.close_rounded),
-              onPressed: () => _showExitConfirmation(context),
-            ),
-            title: Text('Memory Game', style: AppTextStyles.heading4),
-            actions: [
-              // Restart button (single player only)
-              if (!isMultiplayer)
-                IconButton(
-                  icon: const Icon(Icons.refresh_rounded),
-                  onPressed: () {
-                    gameProvider.restartGame();
-                  },
+          backgroundColor: AppColors.backgroundLight,
+          body: Stack(
+            children: [
+              // Stitch: Decorative blur circle
+              Positioned(
+                top: -80,
+                right: -60,
+                child: Container(
+                  width: 180,
+                  height: 180,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.primaryBlue.withOpacity(0.08),
+                  ),
                 ),
-            ],
-          ),
-          body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // Stats bar
-                  _buildStatsBar(gameProvider),
-                  const SizedBox(height: 16),
-                  // Message display
-                  if (gameProvider.message != null) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.accentGreen.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        gameProvider.message!,
-                        style: AppTextStyles.encouragement,
-                        textAlign: TextAlign.center,
+              ),
+              SafeArea(
+                child: Column(
+                  children: [
+                    // Stitch: Custom header
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Row(
+                        children: [
+                          // Close button
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: AppColors.backgroundWhite,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: AppColors.borderBlue),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.shadowSoft,
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.close_rounded),
+                              color: AppColors.textPrimary,
+                              onPressed: () => _showExitConfirmation(context),
+                            ),
+                          ),
+                          const Spacer(),
+                          // Title with pill
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primarySoft,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text('🧠', style: TextStyle(fontSize: 18)),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Memory Game',
+                                  style: AppTextStyles.labelSmall.copyWith(
+                                    color: AppColors.primaryBlue,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Spacer(),
+                          // Restart button (single player only)
+                          if (!isMultiplayer)
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: AppColors.backgroundWhite,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: AppColors.borderBlue),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.shadowSoft,
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: IconButton(
+                                icon: const Icon(Icons.refresh_rounded),
+                                color: AppColors.primaryBlue,
+                                onPressed: () {
+                                  gameProvider.restartGame();
+                                },
+                              ),
+                            )
+                          else
+                            // Placeholder for symmetry in multiplayer
+                            const SizedBox(width: 48),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 16),
-                  ],
-                  // Turn indicator (multiplayer)
-                  if (isMultiplayer) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: gameProvider.isMyTurn
-                            ? AppColors.accentGreen.withOpacity(0.2)
-                            : AppColors.warning.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        gameProvider.isMyTurn
-                            ? 'Your Turn! 🎯'
-                            : 'Waiting for opponent...',
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          color: gameProvider.isMyTurn
-                              ? AppColors.accentGreen
-                              : AppColors.warning,
-                          fontWeight: FontWeight.bold,
+                    // Content
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          children: [
+                            // Stats bar
+                            _buildStatsBar(gameProvider),
+                            const SizedBox(height: 12),
+                            // Message display
+                            if (gameProvider.message != null) ...[
+                              _buildMessageBanner(
+                                gameProvider.message!,
+                                AppColors.accentGreen,
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                            // Turn indicator (multiplayer)
+                            if (isMultiplayer) ...[
+                              _buildTurnIndicator(
+                                isMyTurn: gameProvider.isMyTurn,
+                                myTurnText: 'Your Turn! 🎯',
+                                waitingText: 'Waiting for opponent...',
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                            // Turn indicator (bot game)
+                            if (gameProvider.isBotGame) ...[
+                              Builder(
+                                builder: (context) {
+                                  final isBotTurn =
+                                      !gameProvider.isMyTurn || gameProvider.isProcessing;
+                                  return _buildTurnIndicator(
+                                    isMyTurn: !isBotTurn,
+                                    myTurnText: 'Your Turn! 🎯',
+                                    waitingText: '🤖 Bot is thinking...',
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                            // Game grid
+                            Expanded(
+                              child: Center(
+                                child: _buildGameGrid(gameProvider, gridSize, cards),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                  ],
-                  // Turn indicator (bot game) - show when it's bot's turn
-                  if (gameProvider.isBotGame) ...[
-                    Builder(
-                      builder: (context) {
-                        // Get bot turn status from provider
-                        // We check if it's NOT your turn
-                        final isBotTurn =
-                            !gameProvider.isMyTurn || gameProvider.isProcessing;
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isBotTurn
-                                ? AppColors.warning.withOpacity(0.2)
-                                : AppColors.accentGreen.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            isBotTurn
-                                ? '🤖 Bot is thinking...'
-                                : 'Your Turn! 🎯',
-                            style: AppTextStyles.bodyLarge.copyWith(
-                              color: isBotTurn
-                                  ? AppColors.warning
-                                  : AppColors.accentGreen,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        );
-                      },
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                  ],
-                  // Game grid
-                  Expanded(
+                  // Floating mic button (bottom center)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 24,
                     child: Center(
-                      child: _buildGameGrid(gameProvider, gridSize, cards),
+                      child: _buildVoiceChatButton(),
                     ),
                   ),
-                ],
-              ),
-            ),
+            ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildVoiceChatButton() {
+    final isConnected = _voiceChat?.isConnected ?? false;
+    final isMuted = _voiceChat?.isMuted ?? true;
+
+    // Larger, accessible floating mic button for seniors
+    return SizedBox(
+      width: 72,
+      height: 72,
+      child: ElevatedButton(
+        onPressed: isConnected ? () => _voiceChat?.toggleMute() : null,
+        style: ElevatedButton.styleFrom(
+          shape: const CircleBorder(),
+          backgroundColor: !isConnected
+              ? AppColors.backgroundWhite
+              : isMuted
+                  ? const Color(0xFFFFEBEE)
+                  : const Color(0xFFE8F5E9),
+          elevation: 8,
+          padding: EdgeInsets.zero,
+        ),
+        child: Icon(
+          isMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
+          size: 36,
+          color: !isConnected
+              ? AppColors.textSecondary
+              : isMuted
+                  ? const Color(0xFFE53935)
+                  : const Color(0xFF4CAF50),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageBanner(String message, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('✨', style: const TextStyle(fontSize: 20)),
+          const SizedBox(width: 10),
+          Text(
+            message,
+            style: AppTextStyles.bodyLarge.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTurnIndicator({
+    required bool isMyTurn,
+    required String myTurnText,
+    required String waitingText,
+  }) {
+    final color = isMyTurn ? AppColors.accentGreen : AppColors.warning;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Text(
+        isMyTurn ? myTurnText : waitingText,
+        style: AppTextStyles.bodyLarge.copyWith(
+          color: color,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 
@@ -231,15 +401,16 @@ class _GameScreenState extends State<GameScreen> {
     final isMultiplayer = gameProvider.isMultiplayer;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         color: AppColors.backgroundWhite,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.borderBlue),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: AppColors.shadowCard,
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -251,14 +422,14 @@ class _GameScreenState extends State<GameScreen> {
             label: 'Matches',
             value: '${gameProvider.matchesFound}/${gameProvider.totalPairs}',
           ),
-          Container(width: 1, height: 40, color: AppColors.borderLight),
+          _buildDivider(),
           _buildStatItem(
             icon: '🔄',
             label: 'Moves',
             value: '${gameProvider.moves}',
           ),
           if (isBotGame) ...[
-            Container(width: 1, height: 40, color: AppColors.borderLight),
+            _buildDivider(),
             _buildStatItem(
               icon: '⚔️',
               label: 'You vs Bot',
@@ -266,7 +437,7 @@ class _GameScreenState extends State<GameScreen> {
             ),
           ],
           if (isMultiplayer) ...[
-            Container(width: 1, height: 40, color: AppColors.borderLight),
+            _buildDivider(),
             _buildStatItem(
               icon: '👤',
               label: 'Score',
@@ -276,6 +447,14 @@ class _GameScreenState extends State<GameScreen> {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Container(
+      width: 1,
+      height: 44,
+      color: AppColors.borderBlue,
     );
   }
 
@@ -290,16 +469,22 @@ class _GameScreenState extends State<GameScreen> {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(icon, style: const TextStyle(fontSize: 20)),
-            const SizedBox(width: 8),
-            Text(value, style: AppTextStyles.heading4),
+            Text(icon, style: const TextStyle(fontSize: 18)),
+            const SizedBox(width: 6),
+            Text(
+              value,
+              style: AppTextStyles.statsValue.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: AppTextStyles.bodySmall.copyWith(
+          style: AppTextStyles.labelSmall.copyWith(
             color: AppColors.textSecondary,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
@@ -309,10 +494,10 @@ class _GameScreenState extends State<GameScreen> {
   Widget _buildGameGrid(GameProvider gameProvider, int gridSize, List cards) {
     // Calculate card size based on screen and grid
     final screenWidth = MediaQuery.of(context).size.width - 32;
-    final screenHeight = MediaQuery.of(context).size.height - 350;
+    final screenHeight = MediaQuery.of(context).size.height - 380;
     final maxCardSize = 100.0;
-    final horizontalGap = 8.0 * (gridSize - 1);
-    final verticalGap = 8.0 * (gridSize - 1);
+    final horizontalGap = 10.0 * (gridSize - 1);
+    final verticalGap = 10.0 * (gridSize - 1);
 
     final cardSizeByWidth = (screenWidth - horizontalGap) / gridSize;
     final cardSizeByHeight = (screenHeight - verticalGap) / gridSize;
@@ -327,8 +512,8 @@ class _GameScreenState extends State<GameScreen> {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: gridSize,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
         childAspectRatio: 1,
       ),
       itemCount: cards.length,
@@ -355,31 +540,79 @@ class _GameScreenState extends State<GameScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Leave Game?', style: AppTextStyles.heading3),
-        content: Text(
-          'Are you sure you want to leave? Your progress will be lost.',
-          style: AppTextStyles.bodyMedium,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Stay',
-              style: AppTextStyles.buttonMedium.copyWith(
-                color: AppColors.primaryBlue,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: AppColors.backgroundWhite,
+        title: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: Text('🚪', style: TextStyle(fontSize: 22)),
               ),
             ),
+            const SizedBox(width: 12),
+            Text('Leave Game?', style: AppTextStyles.heading4),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to leave? Your progress will be lost.',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
           ),
-          ElevatedButton(
-            onPressed: () {
-              final gameProvider = context.read<GameProvider>();
-              gameProvider.reset();
-              Navigator.of(context).pop();
-              Navigator.of(context).pop();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: Text('Leave', style: AppTextStyles.buttonMedium),
+        ),
+        actionsPadding: const EdgeInsets.all(16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: const BorderSide(color: AppColors.borderBlue),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    'Stay',
+                    style: AppTextStyles.buttonMedium.copyWith(
+                      color: AppColors.primaryBlue,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    final gameProvider = context.read<GameProvider>();
+                    gameProvider.reset();
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'Leave',
+                    style: AppTextStyles.buttonMedium.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

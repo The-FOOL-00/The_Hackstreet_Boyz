@@ -1,6 +1,6 @@
 /// Splash screen with app logo
 ///
-/// Shows the Luscid branding while initializing the app.
+/// Stitch Design: Gradient top section, decorative blur circles, centered logo.
 library;
 
 import 'package:flutter/material.dart';
@@ -91,60 +91,138 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
-      backgroundColor: AppColors.primaryBlue,
-      body: Center(
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            return Opacity(
-              opacity: _fadeAnimation.value,
-              child: Transform.scale(
-                scale: _scaleAnimation.value,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Logo
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: AppColors.backgroundWhite,
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Text('🧠', style: TextStyle(fontSize: 60)),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    // App name
-                    Text(
-                      'Luscid',
-                      style: AppTextStyles.heading1.copyWith(
-                        color: AppColors.textOnPrimary,
-                        fontSize: 48,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Keep Your Mind Active',
-                      style: AppTextStyles.bodyLarge.copyWith(
-                        color: AppColors.textOnPrimary.withOpacity(0.8),
-                      ),
-                    ),
-                  ],
+      backgroundColor: AppColors.backgroundLight,
+      body: Stack(
+        children: [
+          // Stitch: Gradient top section
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: screenHeight * 0.45,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primaryBlue, Color(0xFF60A5FA)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(48),
+                  bottomRight: Radius.circular(48),
                 ),
               ),
-            );
-          },
-        ),
+            ),
+          ),
+          // Stitch: Decorative blur circle top-right
+          Positioned(
+            top: -60,
+            right: -60,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.1),
+              ),
+            ),
+          ),
+          // Stitch: Decorative blur circle bottom-left
+          Positioned(
+            bottom: screenHeight * 0.3,
+            left: -80,
+            child: Container(
+              width: 160,
+              height: 160,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primaryBlue.withOpacity(0.08),
+              ),
+            ),
+          ),
+          // Main content
+          Center(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                return Opacity(
+                  opacity: _fadeAnimation.value,
+                  child: Transform.scale(
+                    scale: _scaleAnimation.value,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Stitch: Logo container with shadow
+                        Container(
+                          width: 140,
+                          height: 140,
+                          decoration: BoxDecoration(
+                            color: AppColors.backgroundWhite,
+                            borderRadius: BorderRadius.circular(32),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primaryBlue.withOpacity(0.25),
+                                blurRadius: 30,
+                                offset: const Offset(0, 12),
+                              ),
+                            ],
+                          ),
+                          child: const Center(
+                            child: Text('🧠', style: TextStyle(fontSize: 70)),
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        // App name
+                        Text(
+                          'Luscid',
+                          style: AppTextStyles.heading1.copyWith(
+                            color: AppColors.textPrimary,
+                            fontSize: 52,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primarySoft,
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: Text(
+                            'Keep Your Mind Active',
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              color: AppColors.primaryBlue,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 48),
+                        // Loading indicator
+                        SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.primaryBlue.withOpacity(0.6),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

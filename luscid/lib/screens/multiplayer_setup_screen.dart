@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../core/constants/colors.dart';
 import '../core/constants/text_styles.dart';
 import '../core/constants/game_icons.dart';
+import '../models/game_room_model.dart';
 import '../providers/game_provider.dart';
 import '../widgets/large_button.dart';
 import '../widgets/numeric_keypad.dart';
@@ -28,19 +29,39 @@ class _MultiplayerSetupScreenState extends State<MultiplayerSetupScreen> {
   String _roomCode = '';
   String? _error;
   String? _createdRoomCode;
+  bool _hasJoined = false; // Track if guest has successfully joined
+  bool _navigationScheduled = false; // Prevent duplicate navigation
+  bool _isDisposed = false; // Track if widget is disposed
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<GameProvider>(
       builder: (context, gameProvider, child) {
-        // If room is ready and has both players, start the game
-        if (gameProvider.room != null &&
-            gameProvider.room!.isFull &&
-            gameProvider.room!.status.name == 'playing') {
+        final room = gameProvider.room;
+        debugPrint(
+          '[MultiplayerSetup] Build: room=${room?.roomCode}, status=${room?.status}, cards=${room?.cards.length ?? 0}',
+        );
+
+        // Navigate to game when room is playing and has cards
+        if (room != null &&
+            room.status == GameRoomStatus.playing &&
+            room.cards.isNotEmpty &&
+            !_navigationScheduled) {
+          _navigationScheduled = true;
+          debugPrint('[MultiplayerSetup] Scheduling navigation to GameScreen!');
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const GameScreen()),
-            );
+            if (mounted && !_isDisposed) {
+              debugPrint('[MultiplayerSetup] Navigating now!');
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const GameScreen()),
+              );
+            }
           });
         }
 
@@ -62,8 +83,8 @@ class _MultiplayerSetupScreenState extends State<MultiplayerSetupScreen> {
               title: Text('Play Together', style: AppTextStyles.heading4),
             ),
             body: SafeArea(
-              child: _createdRoomCode != null
-                  ? _buildWaitingForPlayer(gameProvider)
+              child: _createdRoomCode != null || _hasJoined
+                  ? _buildWaitingScreen(gameProvider)
                   : _buildSetup(gameProvider),
             ),
           ),
@@ -248,70 +269,120 @@ class _MultiplayerSetupScreenState extends State<MultiplayerSetupScreen> {
     );
   }
 
-  Widget _buildWaitingForPlayer(GameProvider gameProvider) {
+  Widget _buildWaitingScreen(GameProvider gameProvider) {
+    final room = gameProvider.room;
+    final isHost = _createdRoomCode != null;
+    final hasGuest = room?.guestId != null;
+
+    // Determine waiting message
+    String waitingText;
+    String subText;
+    if (isHost && !hasGuest) {
+      waitingText = 'Waiting for Player...';
+      subText = 'Share this code with your friend!';
+    } else if (isHost && hasGuest) {
+      waitingText = 'Player Joined!';
+      subText = 'Starting game...';
+    } else {
+      waitingText = 'Joined Room!';
+      subText = 'Waiting for host to start the game...';
+    }
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('⏳', style: TextStyle(fontSize: 64)),
+          Text(hasGuest ? '🎮' : '⏳', style: const TextStyle(fontSize: 64)),
           const SizedBox(height: 24),
           Text(
-            'Waiting for Player...',
+            waitingText,
             style: AppTextStyles.heading3,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
-          // Room code display
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppColors.backgroundWhite,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Text(
-                  'Room Code',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
+          // Room code display (for host)
+          if (_createdRoomCode != null)
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundWhite,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(_createdRoomCode ?? '', style: AppTextStyles.roomCode),
-                const SizedBox(height: 16),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: _createdRoomCode!));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Code copied to clipboard!'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.copy),
-                  label: const Text('Copy Code'),
-                ),
-              ],
+                ],
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    'Room Code',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(_createdRoomCode ?? '', style: AppTextStyles.roomCode),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: _createdRoomCode!));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Code copied to clipboard!'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.copy),
+                    label: const Text('Copy Code'),
+                  ),
+                ],
+              ),
             ),
-          ),
+          // Room info for guest
+          if (_hasJoined && !isHost)
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundWhite,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.green, size: 48),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Room ${room?.roomCode ?? _roomCode}',
+                    style: AppTextStyles.heading4,
+                  ),
+                ],
+              ),
+            ),
           const SizedBox(height: 24),
           Text(
-            'Share this code with your friend!',
+            subText,
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.textSecondary,
             ),
             textAlign: TextAlign.center,
           ),
           const Spacer(),
+          // Start Game button (host only, when guest joined)
+          if (isHost && hasGuest)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: LargeButton(
+                text: 'Start Game',
+                emoji: '🚀',
+                onPressed: () async {
+                  await gameProvider.startMultiplayerGame();
+                },
+              ),
+            ),
           LargeButton(
             text: 'Cancel',
             isPrimary: false,
@@ -319,6 +390,9 @@ class _MultiplayerSetupScreenState extends State<MultiplayerSetupScreen> {
               gameProvider.leaveRoom();
               setState(() {
                 _createdRoomCode = null;
+                _hasJoined = false;
+                _roomCode = '';
+                _navigationScheduled = false;
               });
             },
           ),
@@ -350,19 +424,19 @@ class _MultiplayerSetupScreenState extends State<MultiplayerSetupScreen> {
     }
   }
 
-  void _onRoomUpdate() {
-    // No longer needed - GameProvider handles the subscription
-  }
-
   Future<void> _joinRoom(GameProvider gameProvider) async {
     final success = await gameProvider.joinRoom(_roomCode);
 
-    if (!success) {
+    if (success) {
+      setState(() {
+        _hasJoined = true;
+        _error = null;
+      });
+    } else {
       setState(() {
         _error = gameProvider.error ?? 'Failed to join room';
         _roomCode = '';
       });
     }
-    // If successful, the game will start automatically via the subscription
   }
 }

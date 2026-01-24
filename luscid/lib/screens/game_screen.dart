@@ -20,21 +20,28 @@ class GameScreen extends StatefulWidget {
 }
 
 class _GameScreenState extends State<GameScreen> {
+  bool _isListening = false;
+
   @override
   void initState() {
     super.initState();
     // Listen for game completion
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkGameComplete();
+      if (mounted) {
+        _checkGameComplete();
+      }
     });
   }
 
   void _checkGameComplete() {
+    if (!mounted) return;
     final gameProvider = context.read<GameProvider>();
     gameProvider.addListener(_onGameStateChanged);
+    _isListening = true;
   }
 
   void _onGameStateChanged() {
+    if (!mounted) return;
     final gameProvider = context.read<GameProvider>();
     if (gameProvider.isGameComplete) {
       // Mark activity as complete
@@ -53,8 +60,14 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   void dispose() {
-    final gameProvider = context.read<GameProvider>();
-    gameProvider.removeListener(_onGameStateChanged);
+    if (_isListening) {
+      try {
+        final gameProvider = context.read<GameProvider>();
+        gameProvider.removeListener(_onGameStateChanged);
+      } catch (_) {
+        // Provider may already be disposed
+      }
+    }
     super.dispose();
   }
 
@@ -65,6 +78,28 @@ class _GameScreenState extends State<GameScreen> {
         final gridSize = gameProvider.gridSize;
         final cards = gameProvider.cards;
         final isMultiplayer = gameProvider.isMultiplayer;
+
+        // Show loading if cards are empty (waiting for sync)
+        if (cards.isEmpty || gridSize == 0) {
+          return Scaffold(
+            backgroundColor: AppColors.backgroundBeige,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              title: Text('Memory Game', style: AppTextStyles.heading4),
+            ),
+            body: const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Loading game...'),
+                ],
+              ),
+            ),
+          );
+        }
 
         return Scaffold(
           backgroundColor: AppColors.backgroundBeige,

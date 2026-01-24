@@ -86,9 +86,13 @@ class GameRoom {
       hostId: json['hostId'] as String,
       guestId: json['guestId'] as String?,
       gridSize: json['gridSize'] as int,
-      cards: (json['cards'] as List)
-          .map((c) => GameCard.fromJson(c as Map<String, dynamic>))
-          .toList(),
+      cards:
+          (json['cards'] as List?)
+              ?.map(
+                (c) => GameCard.fromJson(Map<String, dynamic>.from(c as Map)),
+              )
+              .toList() ??
+          [],
       currentTurn: json['currentTurn'] as String,
       scores: Map<String, int>.from(json['scores'] as Map),
       status: GameRoomStatus.values.firstWhere(

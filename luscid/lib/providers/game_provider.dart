@@ -39,6 +39,7 @@ class GameProvider extends ChangeNotifier {
   GameRoom? _room;
   StreamSubscription? _roomSubscription;
   String? _currentUserId;
+  bool _gameStarted = false; // Track if we already started the game
 
   // Loading & errors
   bool _isLoading = false;
@@ -84,18 +85,43 @@ class GameProvider extends ChangeNotifier {
 
   /// Handles card tap in single-player mode
   Future<void> onCardTap(int index) async {
-    if (_state != GameState.playing) return;
-    if (_isProcessing) return;
-    if (!isMyTurn) return;
+    if (_state != GameState.playing) {
+      debugPrint('[GameProvider] onCardTap ignored: state=$_state');
+      return;
+    }
+    if (_isProcessing) {
+      debugPrint('[GameProvider] onCardTap ignored: isProcessing=true');
+      return;
+    }
+    if (!isMyTurn) {
+      debugPrint('[GameProvider] onCardTap ignored: not my turn');
+      return;
+    }
 
     final card = _cards[index];
 
     // Can't tap matched or already flipped cards
-    if (card.isMatched || card.isFlipped) return;
+    if (card.isMatched || card.isFlipped) {
+      debugPrint(
+        '[GameProvider] onCardTap ignored: card already matched/flipped',
+      );
+      return;
+    }
+
+    debugPrint('[GameProvider] Flipping card at index $index');
 
     // Flip the card
     _cards = _gameService.flipCard(_cards, index);
     notifyListeners();
+
+    // Sync flipped card to Firebase immediately for real-time updates
+    if (isMultiplayer && _room != null) {
+      debugPrint('[GameProvider] Syncing flipped card to Firebase...');
+      await _firebaseService.updateCards(_room!.roomCode, _cards);
+      debugPrint(
+        '[GameProvider] Card[$index] synced: symbol=${card.symbol}, isFlipped=true',
+      );
+    }
 
     if (_firstSelectedCard == null) {
       // First card selected
@@ -119,6 +145,9 @@ class GameProvider extends ChangeNotifier {
       _firstSelectedCard!,
       _secondSelectedCard!,
     );
+    debugPrint(
+      '[GameProvider] Match check: ${_firstSelectedCard!.symbol} vs ${_secondSelectedCard!.symbol} = $isMatch',
+    );
 
     if (isMatch) {
       // Match found!
@@ -132,11 +161,15 @@ class GameProvider extends ChangeNotifier {
 
       if (isMultiplayer && _room != null) {
         // Update multiplayer state
+        debugPrint('[GameProvider] Syncing match to Firebase...');
         await _firebaseService.updateCards(_room!.roomCode, _cards);
         await _firebaseService.updateScore(
           _room!.roomCode,
           _currentUserId!,
           (_room!.scores[_currentUserId] ?? 0) + 1,
+        );
+        debugPrint(
+          '[GameProvider] Match synced for player $_currentUserId, new score: ${(_room!.scores[_currentUserId] ?? 0) + 1}',
         );
       }
 
@@ -158,8 +191,12 @@ class GameProvider extends ChangeNotifier {
         // Switch turns
         final nextPlayer =
             _room!.getOpponentId(_currentUserId!) ?? _currentUserId!;
+        debugPrint(
+          '[GameProvider] No match, switching turn from $_currentUserId to $nextPlayer',
+        );
         await _firebaseService.updateCards(_room!.roomCode, _cards);
         await _firebaseService.updateTurn(_room!.roomCode, nextPlayer);
+        debugPrint('[GameProvider] Turn switched on Firebase');
       }
     }
 
@@ -251,7 +288,27 @@ class GameProvider extends ChangeNotifier {
 
     _setLoading(true);
     try {
-      await _firebaseService.startGame(_room!.roomCode, _difficulty);
+      // Derive difficulty from gridSize if not set
+      GameDifficulty difficulty = _difficulty;
+      if (difficulty == null) {
+        // Infer difficulty from gridSize
+        switch (_room!.gridSize) {
+          case 2:
+            difficulty = GameDifficulty.easy;
+            break;
+          case 4:
+            difficulty = GameDifficulty.medium;
+            break;
+          case 6:
+            difficulty = GameDifficulty.hard;
+            break;
+          default:
+            difficulty = GameDifficulty.medium;
+        }
+        _difficulty = difficulty;
+      }
+
+      await _firebaseService.startGame(_room!.roomCode, difficulty);
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -261,29 +318,44 @@ class GameProvider extends ChangeNotifier {
 
   void _subscribeToRoom(String roomCode) {
     _roomSubscription?.cancel();
+    _gameStarted = false; // Reset when subscribing to a new room
+    debugPrint('[GameProvider] Subscribing to room: $roomCode');
+
     _roomSubscription = _firebaseService.watchRoom(roomCode).listen((room) {
       if (room == null) {
+        debugPrint('[GameProvider] Room no longer exists');
         _error = 'Room no longer exists';
         _room = null;
         notifyListeners();
         return;
       }
 
-      final wasWaiting = _room?.status == GameRoomStatus.waiting;
+      final isHost = room.hostId == _currentUserId;
+      final flippedCount = room.cards.where((c) => c.isFlipped).length;
+      final matchedCount = room.cards.where((c) => c.isMatched).length;
+      debugPrint(
+        '[GameProvider] Room update: status=${room.status}, turn=${room.currentTurn}, isHost=$isHost, cards=${room.cards.length}, flipped=$flippedCount, matched=$matchedCount',
+      );
+
+      // Log individual card states for debugging
+      for (var i = 0; i < room.cards.length; i++) {
+        final c = room.cards[i];
+        if (c.isFlipped || c.isMatched) {
+          debugPrint(
+            '[GameProvider] Card[$i]: flipped=${c.isFlipped}, matched=${c.isMatched}, symbol=${c.symbol}',
+          );
+        }
+      }
+
       _room = room;
       _cards = room.cards;
 
-      // Auto-start game when room becomes full (host only)
-      if (wasWaiting &&
-          room.isFull &&
-          room.status == GameRoomStatus.waiting &&
-          room.hostId == _currentUserId) {
-        // Room just became full, start the game
-        startMultiplayerGame();
-      }
+      // Note: Game now starts manually via button press
+      // Auto-start removed to give host control
 
       if (room.status == GameRoomStatus.playing &&
           _state != GameState.playing) {
+        debugPrint('[GameProvider] Game is now playing!');
         _state = GameState.playing;
         _resetGameState();
       } else if (room.status == GameRoomStatus.finished) {
@@ -293,6 +365,11 @@ class GameProvider extends ChangeNotifier {
 
       // Update matches count for current user
       _matchesFound = room.scores[_currentUserId] ?? 0;
+
+      // Log real-time sync confirmation
+      debugPrint(
+        '[GameProvider] 🔄 Real-time sync: cards updated, total flipped=${flippedCount}, matched=${matchedCount}, isMyTurn=${room.currentTurn == _currentUserId}',
+      );
 
       notifyListeners();
     });

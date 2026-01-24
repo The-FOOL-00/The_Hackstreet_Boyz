@@ -45,86 +45,89 @@ class DifficultySelectScreen extends StatelessWidget {
         title: Text('Choose Difficulty', style: AppTextStyles.heading4),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppColors.backgroundWhite,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: [
-                    const Text('🎯', style: TextStyle(fontSize: 48)),
-                    const SizedBox(height: 12),
-                    Text(
-                      'How challenging would you like it?',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-              // Difficulty options
-              _buildDifficultyCard(
-                context: context,
-                difficulty: GameDifficulty.easy,
-                title: 'Easy',
-                subtitle: '2×2 Grid • 2 Pairs',
-                emoji: '😊',
-                color: AppColors.accentGreen,
-              ),
-              const SizedBox(height: 16),
-              _buildDifficultyCard(
-                context: context,
-                difficulty: GameDifficulty.medium,
-                title: 'Medium',
-                subtitle: '4×4 Grid • 8 Pairs',
-                emoji: '🤔',
-                color: AppColors.warning,
-              ),
-              const SizedBox(height: 16),
-              _buildDifficultyCard(
-                context: context,
-                difficulty: GameDifficulty.hard,
-                title: 'Hard',
-                subtitle: '6×6 Grid • 18 Pairs',
-                emoji: '💪',
-                color: AppColors.error,
-              ),
-              const Spacer(),
-              // Tip
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryBlue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Text('💡', style: TextStyle(fontSize: 24)),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Start with Easy if you\'re new!',
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundWhite,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text('🎯', style: TextStyle(fontSize: 48)),
+                      const SizedBox(height: 12),
+                      Text(
+                        'How challenging would you like it?',
                         style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.primaryBlue,
+                          color: AppColors.textSecondary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                // Difficulty options
+                _buildDifficultyCard(
+                  context: context,
+                  difficulty: GameDifficulty.easy,
+                  title: 'Easy',
+                  subtitle: '2×2 Grid • 2 Pairs',
+                  emoji: '😊',
+                  color: AppColors.accentGreen,
+                ),
+                const SizedBox(height: 16),
+                _buildDifficultyCard(
+                  context: context,
+                  difficulty: GameDifficulty.medium,
+                  title: 'Medium',
+                  subtitle: '4×4 Grid • 8 Pairs',
+                  emoji: '🤔',
+                  color: AppColors.warning,
+                ),
+                const SizedBox(height: 16),
+                _buildDifficultyCard(
+                  context: context,
+                  difficulty: GameDifficulty.hard,
+                  title: 'Hard',
+                  subtitle: '6×6 Grid • 18 Pairs',
+                  emoji: '💪',
+                  color: AppColors.error,
+                ),
+                const SizedBox(height: 32),
+                // Tip
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryBlue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Text('💡', style: TextStyle(fontSize: 24)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Start with Easy if you\'re new!',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.primaryBlue,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

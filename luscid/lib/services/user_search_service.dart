@@ -4,6 +4,7 @@
 library;
 
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart';
 
 /// User search result model
 class UserSearchResult {
@@ -63,16 +64,30 @@ class UserSearchService {
     String? excludeUid,
   }) async {
     final normalizedPhone = _normalizePhone(phone);
+    debugPrint('🔎 Normalized phone: $normalizedPhone');
 
     // First check phone index
     final phoneKey = normalizedPhone.replaceAll('+', '');
+    debugPrint('🔑 Phone key: $phoneKey');
+
     final indexSnapshot = await _phoneIndexRef.child(phoneKey).get();
+    debugPrint(
+      '📊 Index snapshot exists: ${indexSnapshot.exists}, value: ${indexSnapshot.value}',
+    );
 
     if (indexSnapshot.exists) {
       final userId = indexSnapshot.value as String;
+      debugPrint('👤 Found userId: $userId, excludeUid: $excludeUid');
+
       if (userId != excludeUid) {
-        return await _getUserById(userId);
+        final user = await _getUserById(userId);
+        debugPrint('✅ Returning user: ${user?.displayName}');
+        return user;
+      } else {
+        debugPrint('⚠️ User is self, excluding from results');
       }
+    } else {
+      debugPrint('❌ No user found in phoneIndex for key: $phoneKey');
     }
 
     return null;

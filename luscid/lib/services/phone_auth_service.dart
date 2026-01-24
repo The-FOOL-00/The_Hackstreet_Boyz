@@ -238,13 +238,26 @@ class PhoneAuthService {
     }
 
     // Also index by phone number for contact matching
-    await _database.ref('phoneIndex/$normalizedPhone').set(firebaseUser.uid);
+    // Remove + from phone for Firebase key (keys can't contain special chars)
+    final phoneKey = normalizedPhone.replaceAll('+', '');
+    await _database.ref('phoneIndex/$phoneKey').set(firebaseUser.uid);
   }
 
   /// Normalizes phone number for consistent storage
   String _normalizePhoneNumber(String phone) {
     // Remove all non-digit characters except leading +
-    return phone.replaceAll(RegExp(r'[^\d+]'), '');
+    String normalized = phone.replaceAll(RegExp(r'[^\d+]'), '');
+
+    // Add country code if missing (default to +91 India)
+    if (!normalized.startsWith('+')) {
+      if (normalized.length == 10) {
+        normalized = '+91$normalized';
+      } else if (normalized.startsWith('91') && normalized.length == 12) {
+        normalized = '+$normalized';
+      }
+    }
+
+    return normalized;
   }
 
   /// Updates user's online status
@@ -295,14 +308,16 @@ class PhoneAuthService {
   /// Checks if phone number is already registered
   Future<bool> isPhoneRegistered(String phoneNumber) async {
     final normalizedPhone = _normalizePhoneNumber(phoneNumber);
-    final snapshot = await _database.ref('phoneIndex/$normalizedPhone').get();
+    final phoneKey = normalizedPhone.replaceAll('+', '');
+    final snapshot = await _database.ref('phoneIndex/$phoneKey').get();
     return snapshot.exists;
   }
 
   /// Gets user ID by phone number
   Future<String?> getUserIdByPhone(String phoneNumber) async {
     final normalizedPhone = _normalizePhoneNumber(phoneNumber);
-    final snapshot = await _database.ref('phoneIndex/$normalizedPhone').get();
+    final phoneKey = normalizedPhone.replaceAll('+', '');
+    final snapshot = await _database.ref('phoneIndex/$phoneKey').get();
     if (snapshot.exists) {
       return snapshot.value as String;
     }
@@ -316,8 +331,9 @@ class PhoneAuthService {
       // Get user data to find phone
       final userData = await getUserData(user.uid);
       if (userData != null && userData['phone'] != null) {
-        // Remove phone index
-        await _database.ref('phoneIndex/${userData['phone']}').remove();
+        // Remove phone index (remove + for Firebase key)
+        final phoneKey = (userData['phone'] as String).replaceAll('+', '');
+        await _database.ref('phoneIndex/$phoneKey').remove();
       }
       // Remove user data
       await _usersRef.child(user.uid).remove();

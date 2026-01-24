@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/notification_provider.dart';
 import '../services/user_search_service.dart';
+import '../services/phone_auth_service.dart';
 
 class UserSearchScreen extends StatefulWidget {
   const UserSearchScreen({super.key});
@@ -19,12 +20,37 @@ class UserSearchScreen extends StatefulWidget {
 class _UserSearchScreenState extends State<UserSearchScreen> {
   final _searchController = TextEditingController();
   final _userSearchService = UserSearchService();
+  final _phoneAuthService = PhoneAuthService();
 
   List<UserSearchResult> _searchResults = [];
   bool _isSearching = false;
   String? _errorMessage;
   String? _successMessage;
   Set<String> _sentInvites = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _ensurePhoneIndexExists();
+  }
+
+  /// Ensures current user's phone number is indexed
+  Future<void> _ensurePhoneIndexExists() async {
+    try {
+      final currentUser = _phoneAuthService.currentUser;
+      if (currentUser != null) {
+        // Get user data
+        final userData = await _phoneAuthService.getUserData(currentUser.uid);
+        if (userData != null && userData['phone'] != null) {
+          final phone = userData['phone'] as String;
+          // Re-register phone (will create/update index)
+          await _userSearchService.registerPhoneNumber(phone, currentUser.uid);
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to ensure phone index: $e');
+    }
+  }
 
   @override
   void dispose() {
@@ -48,11 +74,24 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
     });
 
     try {
+      // Get current user to exclude from search
+      final currentUser = _phoneAuthService.currentUser;
+      final excludeUid = currentUser?.uid;
+
       // Check if it's a phone number
       final isPhone = RegExp(r'^[\d+\s-]+$').hasMatch(query);
 
+      debugPrint(
+        '🔍 Searching for: "$query" (isPhone: $isPhone, excludeUid: $excludeUid)',
+      );
+
       if (isPhone) {
-        final result = await _userSearchService.searchByPhone(query);
+        final result = await _userSearchService.searchByPhone(
+          query,
+          excludeUid: excludeUid,
+        );
+        debugPrint('📱 Phone search result: ${result?.displayName ?? "null"}');
+
         setState(() {
           _searchResults = result != null ? [result] : [];
           if (_searchResults.isEmpty) {
@@ -60,7 +99,12 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
           }
         });
       } else {
-        final results = await _userSearchService.searchByName(query);
+        final results = await _userSearchService.searchByName(
+          query,
+          excludeUid: excludeUid,
+        );
+        debugPrint('👤 Name search results: ${results.length}');
+
         setState(() {
           _searchResults = results;
           if (_searchResults.isEmpty) {
@@ -69,6 +113,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
         });
       }
     } catch (e) {
+      debugPrint('❌ Search error: $e');
       setState(() {
         _errorMessage = 'Search failed: ${e.toString()}';
       });
@@ -124,9 +169,10 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
             child: TextField(
               controller: _searchController,
               onChanged: (value) {
+                setState(() {}); // Update UI for clear button
                 // Debounce search
                 Future.delayed(const Duration(milliseconds: 500), () {
-                  if (_searchController.text == value) {
+                  if (mounted && _searchController.text == value) {
                     _searchUsers(value);
                   }
                 });
@@ -139,8 +185,11 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                     ? IconButton(
                         icon: const Icon(Icons.clear),
                         onPressed: () {
-                          _searchController.clear();
-                          _searchUsers('');
+                          setState(() {
+                            _searchController.clear();
+                            _searchResults = [];
+                            _errorMessage = null;
+                          });
                         },
                       )
                     : null,
@@ -168,7 +217,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
           // Success message
           if (_successMessage != null)
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.green.shade50,
@@ -188,220 +237,223 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
               ),
             ),
 
-          // Loading indicator
-          if (_isSearching)
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: CircularProgressIndicator(color: Color(0xFF6B9080)),
-            ),
+          // Content area
+          Expanded(child: _buildContent()),
+        ],
+      ),
+    );
+  }
 
-          // Error message
-          if (_errorMessage != null && !_isSearching)
-            Padding(
-              padding: const EdgeInsets.all(24),
+  Widget _buildContent() {
+    // Loading state
+    if (_isSearching) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF6B9080)),
+      );
+    }
+
+    // Error state
+    if (_errorMessage != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.search_off, size: 64, color: Colors.grey.shade400),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage!,
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  color: const Color(0xFF5C6B66),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Results state
+    if (_searchResults.isNotEmpty) {
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _searchResults.length,
+        itemBuilder: (context, index) {
+          final user = _searchResults[index];
+          final inviteSent = _sentInvites.contains(user.uid);
+          return _buildUserCard(user, inviteSent);
+        },
+      );
+    }
+
+    // Initial/empty state
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('👥', style: TextStyle(fontSize: 64)),
+            const SizedBox(height: 24),
+            Text(
+              'Find Your Friends',
+              style: GoogleFonts.poppins(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF2D3B36),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Search for friends by entering their phone number or name above',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: const Color(0xFF5C6B66),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F0ED),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.search_off, size: 64, color: Colors.grey.shade400),
-                  const SizedBox(height: 16),
                   Text(
-                    _errorMessage!,
-                    style: GoogleFonts.poppins(color: const Color(0xFF5C6B66)),
-                    textAlign: TextAlign.center,
+                    '💡 Tips:',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF2D3B36),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '• Enter phone number with country code\n• Example: +91 8888888888\n• Or search by name',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: const Color(0xFF5C6B66),
+                    ),
                   ),
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
 
-          // Search results
-          if (!_isSearching && _searchResults.isNotEmpty)
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _searchResults.length,
-                itemBuilder: (context, index) {
-                  final user = _searchResults[index];
-                  final inviteSent = _sentInvites.contains(user.uid);
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        // Avatar
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE8F0ED),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: user.photoUrl != null
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: Image.network(
-                                    user.photoUrl!,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : Center(
-                                  child: Text(
-                                    user.displayName.isNotEmpty
-                                        ? user.displayName[0].toUpperCase()
-                                        : '?',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: const Color(0xFF6B9080),
-                                    ),
-                                  ),
-                                ),
-                        ),
-                        const SizedBox(width: 16),
-
-                        // User info
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                user.displayName,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF2D3B36),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: user.isOnline
-                                          ? Colors.green
-                                          : Colors.grey,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    user.isOnline ? 'Online' : 'Offline',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      color: const Color(0xFF5C6B66),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Add button
-                        if (inviteSent)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.green.shade50,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.check,
-                                  size: 16,
-                                  color: Colors.green.shade700,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Sent',
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.green.shade700,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        else
-                          ElevatedButton.icon(
-                            onPressed: () => _sendBuddyInvite(user),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF6B9080),
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                            ),
-                            icon: const Icon(Icons.person_add, size: 18),
-                            label: Text(
-                              'Add',
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-
-          // Empty state
-          if (!_isSearching && _searchResults.isEmpty && _errorMessage == null)
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.person_search,
-                      size: 80,
-                      color: Colors.grey.shade300,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Search for friends',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF5C6B66),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Enter a name or phone number\nto find friends on Luscid',
-                      style: GoogleFonts.poppins(
-                        color: const Color(0xFF5C6B66),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+  Widget _buildUserCard(UserSearchResult user, bool inviteSent) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            // Avatar
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: const Color(0xFFE8F0ED),
+              child: Text(
+                user.displayName.isNotEmpty
+                    ? user.displayName[0].toUpperCase()
+                    : '?',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF6B9080),
                 ),
               ),
             ),
-        ],
+            const SizedBox(width: 12),
+            // Name and status
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    user.displayName,
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF2D3B36),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: user.isOnline ? Colors.green : Colors.grey,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        user.isOnline ? 'Online' : 'Offline',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: const Color(0xFF5C6B66),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Button
+            inviteSent
+                ? Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '✓ Sent',
+                      style: GoogleFonts.poppins(
+                        color: Colors.green.shade700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  )
+                : TextButton(
+                    onPressed: () => _sendBuddyInvite(user),
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color(0xFF6B9080),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      'Add',
+                      style: GoogleFonts.poppins(fontSize: 12),
+                    ),
+                  ),
+          ],
+        ),
       ),
     );
   }

@@ -7,7 +7,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../services/phone_auth_service.dart';
+import '../providers/notification_provider.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   const OtpVerificationScreen({super.key});
@@ -151,13 +153,19 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       );
 
       if (result.success && result.user != null) {
-        // Update auth provider
-        if (mounted) {
-          // Check if user needs to set up profile
-          final userData = await _phoneAuthService.getUserData(
-            result.user!.uid,
-          );
+        // Initialize NotificationProvider with user info
+        final userData = await _phoneAuthService.getUserData(result.user!.uid);
 
+        if (mounted && userData != null) {
+          final notificationProvider = context.read<NotificationProvider>();
+          notificationProvider.init(
+            result.user!.uid,
+            userData['displayName'] ?? 'User',
+          );
+        }
+
+        // Check if user needs to set up profile
+        if (mounted) {
           if (userData != null &&
               userData['displayName'] != null &&
               userData['displayName'] != 'User') {

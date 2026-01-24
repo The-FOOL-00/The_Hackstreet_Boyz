@@ -273,10 +273,124 @@ class ShoppingListProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Bot game support
+  bool _isBotGame = false;
+  Timer? _botTimer;
+  int _botScore = 0;
+
+  bool get isBotGame => _isBotGame;
+  int get botScore => _botScore;
+
+  /// Creates a solo or bot game (no room code needed)
+  Future<void> createSoloOrBotGame({
+    required int targetItemCount,
+    required int memorizeTimeSeconds,
+    required int selectionTimeSeconds,
+    bool withBot = false,
+  }) async {
+    if (_currentUserId == null) {
+      _error = 'Not logged in';
+      notifyListeners();
+      return;
+    }
+
+    _setLoading(true);
+    _clearError();
+    _isBotGame = withBot;
+    _botScore = 0;
+
+    try {
+      // Create a local room for solo/bot play
+      _room = await _service.createRoom(
+        hostId: _currentUserId!,
+        targetItemCount: targetItemCount,
+        totalItemCount: targetItemCount + 12, // More items to choose from
+        memorizeTimeSeconds: memorizeTimeSeconds,
+        selectionTimeSeconds: selectionTimeSeconds,
+      );
+
+      _startWatchingRoom(_room!.roomCode);
+
+      // Auto-start the game immediately
+      await Future.delayed(const Duration(milliseconds: 500));
+      await _service.startMemorizePhase(_room!.roomCode);
+
+      notifyListeners();
+    } catch (e) {
+      _error = 'Failed to create game: ${e.toString()}';
+      notifyListeners();
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Simulates bot selecting items during selection phase
+  void _startBotSelection() {
+    if (!_isBotGame || _room == null) return;
+
+    final targetIds = targetItems.map((i) => i.id).toSet();
+    final allItemIds = allItems.map((i) => i.id).toList();
+
+    // Bot will select with 70% accuracy
+    _botTimer?.cancel();
+    int botSelections = 0;
+    final maxSelections = targetItems.length;
+
+    _botTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+      if (phase != ShoppingGamePhase.selection ||
+          botSelections >= maxSelections) {
+        timer.cancel();
+        return;
+      }
+
+      // Randomly decide if bot picks correct or wrong item
+      final isCorrect = (DateTime.now().millisecondsSinceEpoch % 10) < 7;
+      String itemToSelect;
+
+      if (isCorrect && targetIds.isNotEmpty) {
+        // Pick a correct item
+        final correctItems = targetIds.where((id) {
+          final item = allItems.firstWhere((i) => i.id == id);
+          return !item.isSelected || item.selectedBy != 'bot';
+        }).toList();
+
+        if (correctItems.isNotEmpty) {
+          itemToSelect =
+              correctItems[DateTime.now().millisecondsSinceEpoch %
+                  correctItems.length];
+        } else {
+          return;
+        }
+      } else {
+        // Pick a wrong item
+        final wrongItems = allItemIds
+            .where((id) => !targetIds.contains(id))
+            .toList();
+        if (wrongItems.isNotEmpty) {
+          itemToSelect =
+              wrongItems[DateTime.now().millisecondsSinceEpoch %
+                  wrongItems.length];
+        } else {
+          return;
+        }
+      }
+
+      // Simulate bot selecting
+      botSelections++;
+      if (targetIds.contains(itemToSelect)) {
+        _botScore += 10;
+      } else {
+        _botScore -= 5;
+      }
+      notifyListeners();
+    });
+  }
+
   @override
   void dispose() {
     _phaseTimer?.cancel();
     _roomSubscription?.cancel();
+    _botTimer?.cancel();
     super.dispose();
   }
 }

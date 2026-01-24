@@ -28,11 +28,11 @@ class Buddy {
 
   bool get isOnline => status == 'online';
 
-  factory Buddy.fromJson(Map<String, dynamic> json) {
+  factory Buddy.fromJson(Map<String, dynamic> json, {String? odId}) {
     return Buddy(
-      uid: json['uid'] as String,
+      uid: odId ?? json['uid'] as String? ?? '',
       displayName: json['displayName'] as String? ?? 'User',
-      phone: json['phone'] as String,
+      phone: json['phone'] as String? ?? '',
       status: json['status'] as String? ?? 'offline',
       lastActive: DateTime.fromMillisecondsSinceEpoch(
         json['lastActive'] as int? ?? 0,
@@ -228,7 +228,7 @@ class ContactService {
         final snapshot = await _usersRef.child(uid).get();
         if (snapshot.exists) {
           final data = Map<String, dynamic>.from(snapshot.value as Map);
-          buddies.add(Buddy.fromJson(data));
+          buddies.add(Buddy.fromJson(data, odId: uid));
         }
       }
 
@@ -248,7 +248,7 @@ class ContactService {
     return _usersRef.child(uid).onValue.map((event) {
       if (event.snapshot.exists) {
         final data = Map<String, dynamic>.from(event.snapshot.value as Map);
-        return Buddy.fromJson(data);
+        return Buddy.fromJson(data, odId: uid);
       }
       return null;
     });

@@ -11,12 +11,13 @@ import '../core/utils/helpers.dart';
 import '../providers/auth_provider.dart';
 import '../providers/game_provider.dart';
 import '../widgets/large_button.dart';
-import 'difficulty_select_screen.dart';
-import 'multiplayer_setup_screen.dart';
+import 'game_mode_screen.dart';
+import 'multiplayer_hub_screen.dart';
 import 'activity_screen.dart';
 import 'help_screen.dart';
 import 'buddy_circle_screen.dart';
-import 'shopping_game_screen.dart';
+import 'phone_auth_screen.dart';
+import '../widgets/notification_bell.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -63,6 +64,8 @@ class HomeScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+                  // Notification Bell
+                  const NotificationBell(),
                 ],
               ),
               const SizedBox(height: 32),
@@ -103,21 +106,39 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       // Play Memory Game (Single Player)
                       LargeButton(
-                        text: 'Play Memory Game',
+                        text: 'Memory Game',
                         emoji: '🧠',
                         isPrimary: true,
                         onPressed: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => const DifficultySelectScreen(),
+                              builder: (_) => const GameModeScreen(
+                                gameType: GameType.memory,
+                              ),
                             ),
                           );
                         },
                       ),
                       const SizedBox(height: 12),
-                      // Multiplayer Memory Game (Room Code)
+                      // Shopping List Game
                       LargeButton(
-                        text: 'Multiplayer Game',
+                        text: 'Shopping List Game',
+                        emoji: '🛒',
+                        isPrimary: true,
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const GameModeScreen(
+                                gameType: GameType.shopping,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      // Multiplayer Games (Choose Game, then Difficulty, then Room Code)
+                      LargeButton(
+                        text: 'Multiplayer Games',
                         emoji: '🎮',
                         isPrimary: false,
                         onPressed: () {
@@ -129,21 +150,7 @@ class HomeScreen extends StatelessWidget {
                           );
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => const MultiplayerSetupScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      // Shopping List Game (New!)
-                      LargeButton(
-                        text: 'Shopping List Game',
-                        emoji: '🛒',
-                        isPrimary: true,
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const ShoppingGameScreen(),
+                              builder: (_) => const MultiplayerHubScreen(),
                             ),
                           );
                         },
@@ -187,6 +194,20 @@ class HomeScreen extends StatelessWidget {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => const HelpScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      // Phone Login Test
+                      LargeButton(
+                        text: 'Phone Login (Test)',
+                        emoji: '📱',
+                        isPrimary: false,
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const PhoneAuthScreen(),
                             ),
                           );
                         },

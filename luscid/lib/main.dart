@@ -10,6 +10,7 @@ import 'providers/activity_provider.dart';
 import 'providers/buddy_list_provider.dart';
 import 'providers/invite_provider.dart';
 import 'providers/shopping_list_provider.dart';
+import 'providers/notification_provider.dart';
 import 'services/local_storage_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/pin_entry_screen.dart';
@@ -26,6 +27,9 @@ import 'screens/otp_verification_screen.dart';
 import 'screens/profile_setup_screen.dart';
 import 'screens/buddy_circle_screen.dart';
 import 'screens/shopping_game_screen.dart';
+import 'screens/shopping_game_setup_screen.dart';
+import 'screens/user_search_screen.dart';
+import 'screens/notifications_screen.dart';
 
 /// Main entry point for the Luscid Memory Game app
 /// An elderly-friendly memory matching game with Firebase integration
@@ -78,6 +82,8 @@ class LuscidApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => InviteProvider()),
         // Shopping list game provider
         ChangeNotifierProvider(create: (_) => ShoppingListProvider()),
+        // Notification provider for in-app notifications
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: MaterialApp(
         title: 'Luscid - Memory Game',
@@ -103,8 +109,13 @@ class LuscidApp extends StatelessWidget {
           '/profile-setup': (context) => const ProfileSetupScreen(),
           // Buddy and invite routes
           '/buddy-circle': (context) => const BuddyCircleScreen(),
+          // User search
+          '/user-search': (context) => const UserSearchScreen(),
+          // Notifications
+          '/notifications': (context) => const NotificationsScreen(),
           // Shopping list game
           '/shopping-game': (context) => const ShoppingGameScreen(),
+          '/shopping-game-setup': (context) => const ShoppingGameSetupScreen(),
         },
 
         // Custom page transitions for elderly-friendly navigation

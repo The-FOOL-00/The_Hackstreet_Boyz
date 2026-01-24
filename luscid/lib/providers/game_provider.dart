@@ -67,7 +67,12 @@ class GameProvider extends ChangeNotifier {
   String? get error => _error;
   String? get message => _message;
   bool get isMultiplayer => _mode == GameMode.multiplayer;
-  bool get isMyTurn => !isMultiplayer || (_room?.currentTurn == _currentUserId);
+  bool get isMyTurn {
+    if (_isBotGame) return !_isBotTurn;
+    if (!isMultiplayer) return true;
+    return _room?.currentTurn == _currentUserId;
+  }
+
   int get gridSize => _gameService.getGridSize(_cards);
 
   // ==================== Single Player ====================
@@ -404,6 +409,236 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ==================== Bot Game ====================
+
+  bool _isBotGame = false;
+  Timer? _botTimer;
+  int _botScore = 0;
+  bool _isBotTurn = false;
+  List<int> _botMemory = []; // Remembers card positions
+
+  bool get isBotGame => _isBotGame;
+  int get botScore => _botScore;
+  int get playerScore => _matchesFound;
+
+  /// Starts a bot game with specified difficulty
+  void startBotGame(GameDifficulty difficulty) {
+    _mode = GameMode.singlePlayer;
+    _difficulty = difficulty;
+    _cards = _gameService.generateCards(difficulty);
+    _resetGameState();
+    _state = GameState.playing;
+    _isBotGame = true;
+    _botScore = 0;
+    _isBotTurn = false;
+    _botMemory = [];
+    notifyListeners();
+  }
+
+  /// Called when player finishes their turn without a match
+  void _switchToBotTurn() {
+    if (!_isBotGame) return;
+
+    _isBotTurn = true;
+    notifyListeners();
+
+    // Bot takes turn after a delay
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (_state == GameState.playing && _isBotTurn) {
+        _doBotMove();
+      }
+    });
+  }
+
+  /// Bot makes a move
+  Future<void> _doBotMove() async {
+    if (_state != GameState.playing || !_isBotTurn) return;
+
+    // Get available (unmatched, not flipped) card indices
+    final availableIndices = <int>[];
+    for (int i = 0; i < _cards.length; i++) {
+      if (!_cards[i].isMatched && !_cards[i].isFlipped) {
+        availableIndices.add(i);
+      }
+    }
+
+    if (availableIndices.length < 2) {
+      _isBotTurn = false;
+      notifyListeners();
+      return;
+    }
+
+    // Bot selects first card (sometimes remembers, sometimes random)
+    int firstIndex;
+    int secondIndex;
+
+    // 60% chance bot uses memory if it has seen matching cards
+    final useMemory = (DateTime.now().millisecondsSinceEpoch % 10) < 6;
+
+    if (useMemory && _botMemory.isNotEmpty) {
+      // Check if we remember a matching pair
+      for (int i = 0; i < _botMemory.length; i++) {
+        for (int j = i + 1; j < _botMemory.length; j++) {
+          final idx1 = _botMemory[i];
+          final idx2 = _botMemory[j];
+          if (idx1 < _cards.length &&
+              idx2 < _cards.length &&
+              !_cards[idx1].isMatched &&
+              !_cards[idx2].isMatched &&
+              _cards[idx1].symbol == _cards[idx2].symbol) {
+            firstIndex = idx1;
+            secondIndex = idx2;
+
+            // Execute bot moves
+            await _executeBotFlip(firstIndex, secondIndex);
+            return;
+          }
+        }
+      }
+    }
+
+    // Random selection
+    availableIndices.shuffle();
+    firstIndex = availableIndices[0];
+    secondIndex = availableIndices[1];
+
+    await _executeBotFlip(firstIndex, secondIndex);
+  }
+
+  Future<void> _executeBotFlip(int firstIndex, int secondIndex) async {
+    // Flip first card
+    _cards = _gameService.flipCard(_cards, firstIndex);
+    notifyListeners();
+
+    // Remember this card
+    if (!_botMemory.contains(firstIndex)) {
+      _botMemory.add(firstIndex);
+    }
+
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    // Flip second card
+    _cards = _gameService.flipCard(_cards, secondIndex);
+    notifyListeners();
+
+    // Remember this card
+    if (!_botMemory.contains(secondIndex)) {
+      _botMemory.add(secondIndex);
+    }
+
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    // Check for match
+    final card1 = _cards[firstIndex];
+    final card2 = _cards[secondIndex];
+    final isMatch = _gameService.checkMatch(card1, card2);
+
+    if (isMatch) {
+      _cards = _gameService.markAsMatched(_cards, card1, card2);
+      _botScore++;
+      _message = 'Bot found a match! 🤖';
+
+      // Remove from memory (already matched)
+      _botMemory.remove(firstIndex);
+      _botMemory.remove(secondIndex);
+
+      // Check if game complete
+      if (_gameService.isGameComplete(_cards)) {
+        _state = GameState.completed;
+        if (_botScore > _matchesFound) {
+          _message = 'Bot wins! 🤖 Better luck next time!';
+        } else if (_botScore < _matchesFound) {
+          _message = 'You win! 🎉 Great job!';
+        } else {
+          _message = "It's a tie! 🤝";
+        }
+        _isBotTurn = false;
+      } else {
+        // Bot gets another turn on match
+        notifyListeners();
+        await Future.delayed(const Duration(milliseconds: 1000));
+        _doBotMove();
+        return;
+      }
+    } else {
+      // No match - flip back
+      await Future.delayed(const Duration(milliseconds: 500));
+      _cards = _gameService.resetFlippedCards(_cards);
+      _isBotTurn = false;
+      _message = 'Your turn!';
+    }
+
+    notifyListeners();
+  }
+
+  /// Override card tap for bot game
+  Future<void> onCardTapBotGame(int index) async {
+    if (!_isBotGame) {
+      await onCardTap(index);
+      return;
+    }
+
+    if (_state != GameState.playing || _isProcessing || _isBotTurn) return;
+
+    final card = _cards[index];
+    if (card.isMatched || card.isFlipped) return;
+
+    _cards = _gameService.flipCard(_cards, index);
+    notifyListeners();
+
+    if (_firstSelectedCard == null) {
+      _firstSelectedCard = _cards[index];
+    } else {
+      _secondSelectedCard = _cards[index];
+      _moves++;
+      _isProcessing = true;
+      notifyListeners();
+
+      await _checkForMatchBotGame();
+    }
+  }
+
+  Future<void> _checkForMatchBotGame() async {
+    if (_firstSelectedCard == null || _secondSelectedCard == null) return;
+
+    final isMatch = _gameService.checkMatch(
+      _firstSelectedCard!,
+      _secondSelectedCard!,
+    );
+
+    if (isMatch) {
+      _cards = _gameService.markAsMatched(
+        _cards,
+        _firstSelectedCard!,
+        _secondSelectedCard!,
+      );
+      _matchesFound++;
+      _message = Helpers.getMatchMessage();
+
+      if (_gameService.isGameComplete(_cards)) {
+        _state = GameState.completed;
+        if (_botScore > _matchesFound) {
+          _message = 'Bot wins! 🤖 Better luck next time!';
+        } else if (_botScore < _matchesFound) {
+          _message = 'You win! 🎉 Great job!';
+        } else {
+          _message = "It's a tie! 🤝";
+        }
+      }
+    } else {
+      await Future.delayed(const Duration(milliseconds: 1000));
+      _cards = _gameService.resetFlippedCards(_cards);
+
+      // Switch to bot turn
+      _switchToBotTurn();
+    }
+
+    _firstSelectedCard = null;
+    _secondSelectedCard = null;
+    _isProcessing = false;
+    notifyListeners();
+  }
+
   /// Resets the provider to initial state
   void reset() {
     _roomSubscription?.cancel();
@@ -415,12 +650,18 @@ class GameProvider extends ChangeNotifier {
     _cards = [];
     _resetGameState();
     _isLoading = false;
+    _isBotGame = false;
+    _botScore = 0;
+    _isBotTurn = false;
+    _botMemory = [];
+    _botTimer?.cancel();
     notifyListeners();
   }
 
   @override
   void dispose() {
     _roomSubscription?.cancel();
+    _botTimer?.cancel();
     super.dispose();
   }
 }

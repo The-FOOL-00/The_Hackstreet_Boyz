@@ -176,6 +176,41 @@ class _GameScreenState extends State<GameScreen> {
                     ),
                     const SizedBox(height: 16),
                   ],
+                  // Turn indicator (bot game) - show when it's bot's turn
+                  if (gameProvider.isBotGame) ...[
+                    Builder(
+                      builder: (context) {
+                        // Get bot turn status from provider
+                        // We check if it's NOT your turn
+                        final isBotTurn =
+                            !gameProvider.isMyTurn || gameProvider.isProcessing;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isBotTurn
+                                ? AppColors.warning.withOpacity(0.2)
+                                : AppColors.accentGreen.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            isBotTurn
+                                ? '🤖 Bot is thinking...'
+                                : 'Your Turn! 🎯',
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              color: isBotTurn
+                                  ? AppColors.warning
+                                  : AppColors.accentGreen,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   // Game grid
                   Expanded(
                     child: Center(
@@ -192,6 +227,9 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   Widget _buildStatsBar(GameProvider gameProvider) {
+    final isBotGame = gameProvider.isBotGame;
+    final isMultiplayer = gameProvider.isMultiplayer;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -219,7 +257,15 @@ class _GameScreenState extends State<GameScreen> {
             label: 'Moves',
             value: '${gameProvider.moves}',
           ),
-          if (gameProvider.isMultiplayer) ...[
+          if (isBotGame) ...[
+            Container(width: 1, height: 40, color: AppColors.borderLight),
+            _buildStatItem(
+              icon: '⚔️',
+              label: 'You vs Bot',
+              value: '${gameProvider.playerScore} - ${gameProvider.botScore}',
+            ),
+          ],
+          if (isMultiplayer) ...[
             Container(width: 1, height: 40, color: AppColors.borderLight),
             _buildStatItem(
               icon: '👤',
@@ -293,7 +339,12 @@ class _GameScreenState extends State<GameScreen> {
           size: cardSize,
           disabled: gameProvider.isProcessing || !gameProvider.isMyTurn,
           onTap: () {
-            gameProvider.onCardTap(index);
+            // Use bot-aware tap handler if it's a bot game
+            if (gameProvider.isBotGame) {
+              gameProvider.onCardTapBotGame(index);
+            } else {
+              gameProvider.onCardTap(index);
+            }
           },
         );
       },

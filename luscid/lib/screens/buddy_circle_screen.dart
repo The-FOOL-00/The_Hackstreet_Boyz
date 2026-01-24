@@ -8,8 +8,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/buddy_list_provider.dart';
 import '../providers/invite_provider.dart';
+import '../providers/notification_provider.dart';
 import '../services/contact_service.dart';
 import '../widgets/invite_modal.dart';
+import 'user_search_screen.dart';
 
 class BuddyCircleScreen extends StatefulWidget {
   const BuddyCircleScreen({super.key});
@@ -90,6 +92,16 @@ class _BuddyCircleScreenState extends State<BuddyCircleScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
+          // Add search button
+          IconButton(
+            icon: const Icon(Icons.person_add, color: Color(0xFF6B9080)),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const UserSearchScreen()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh, color: Color(0xFF6B9080)),
             onPressed: () {

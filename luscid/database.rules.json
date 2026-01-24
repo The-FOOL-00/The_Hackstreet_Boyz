@@ -22,6 +22,42 @@
       }
     },
     
+    // Buddies - mutual friend connections
+    "buddies": {
+      "$userId": {
+        ".read": "auth != null && auth.uid == $userId",
+        ".write": "auth != null",
+        "$buddyId": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        }
+      }
+    },
+    
+    // Buddy requests - pending friend invitations
+    "buddy_requests": {
+      "$userId": {
+        ".read": "auth != null && auth.uid == $userId",
+        ".write": "auth != null",
+        "$requestId": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        }
+      }
+    },
+    
+    // Notifications - in-app notifications per user
+    "notifications": {
+      "$userId": {
+        ".read": "auth != null && auth.uid == $userId",
+        ".write": "auth != null",
+        "$notificationId": {
+          ".read": "auth != null && auth.uid == $userId",
+          ".write": "auth != null"
+        }
+      }
+    },
+    
     // Game rooms - participants can read/write
     "game_rooms": {
       "$roomId": {

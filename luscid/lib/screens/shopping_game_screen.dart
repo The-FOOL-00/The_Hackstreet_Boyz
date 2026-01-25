@@ -10,6 +10,7 @@ import '../core/constants/colors.dart';
 import '../core/constants/text_styles.dart';
 import '../providers/shopping_list_provider.dart';
 import '../services/shopping_list_service.dart';
+import '../voice_chat/voice_chat_service.dart';
 
 class ShoppingGameScreen extends StatefulWidget {
   const ShoppingGameScreen({super.key});
@@ -19,11 +20,15 @@ class ShoppingGameScreen extends StatefulWidget {
 }
 
 class _ShoppingGameScreenState extends State<ShoppingGameScreen> {
+  VoiceChatService? _voiceChat;
+  bool _voiceChatInitialized = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeGame();
+      _tryInitVoiceChat();
     });
   }
 
@@ -38,12 +43,91 @@ class _ShoppingGameScreenState extends State<ShoppingGameScreen> {
     }
   }
 
+  void _tryInitVoiceChat() {
+    if (_voiceChatInitialized) return;
+    
+    final provider = context.read<ShoppingListProvider>();
+    final room = provider.room;
+    final currentUserId = provider.currentUserId;
+    
+    // Check if this is a multiplayer game (has guest) or we're waiting for guest
+    final isMultiplayerRoom = room != null && room.guestId != null;
+    
+    debugPrint('[ShoppingGame] Voice chat try init: hasRoom=${room != null}, hasGuest=${room?.guestId != null}, userId=$currentUserId');
+    
+    if (isMultiplayerRoom && currentUserId != null) {
+      _voiceChat = VoiceChatService(
+        roomId: 'shopping_${room.roomCode}',
+        userId: currentUserId,
+        userName: 'Player',
+      );
+      _voiceChat!.joinRoom();
+      _voiceChat!.addListener(_onVoiceChatChanged);
+      _voiceChatInitialized = true;
+      debugPrint('[ShoppingGame] Voice chat service created and joined!');
+    } else {
+      debugPrint('[ShoppingGame] Voice chat NOT initialized yet - waiting for multiplayer conditions');
+    }
+  }
+
+  void _onVoiceChatChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _voiceChat?.removeListener(_onVoiceChatChanged);
+    _voiceChat?.leaveRoom();
+    _voiceChat?.dispose();
+    super.dispose();
+  }
+
+  Widget _buildVoiceChatButton() {
+    final isConnected = _voiceChat?.isConnected ?? false;
+    final isMuted = _voiceChat?.isMuted ?? true;
+
+    // Larger, accessible floating mic button for seniors
+    return SizedBox(
+      width: 72,
+      height: 72,
+      child: ElevatedButton(
+        onPressed: isConnected ? () => _voiceChat?.toggleMute() : null,
+        style: ElevatedButton.styleFrom(
+          shape: const CircleBorder(),
+          backgroundColor: !isConnected
+              ? AppColors.backgroundWhite
+              : isMuted
+                  ? const Color(0xFFFFEBEE)
+                  : const Color(0xFFE8F5E9),
+          elevation: 8,
+          padding: EdgeInsets.zero,
+        ),
+        child: Icon(
+          isMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
+          size: 36,
+          color: !isConnected
+              ? AppColors.textSecondary
+              : isMuted
+                  ? const Color(0xFFE53935)
+                  : const Color(0xFF4CAF50),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       body: Consumer<ShoppingListProvider>(
         builder: (context, provider, child) {
+          // Try to init voice chat when provider updates (guest joins)
+          if (!_voiceChatInitialized && provider.room?.guestId != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _tryInitVoiceChat();
+            });
+          }
+          
           if (provider.isLoading) {
             return const Center(
               child: CircularProgressIndicator(color: AppColors.primaryBlue),
@@ -107,6 +191,16 @@ class _ShoppingGameScreenState extends State<ShoppingGameScreen> {
                   ),
                 ),
               ),
+              // Voice chat button for multiplayer (bottom center)
+              if (provider.isMultiplayer)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 24,
+                  child: Center(
+                    child: _buildVoiceChatButton(),
+                  ),
+                ),
             ],
           );
         },

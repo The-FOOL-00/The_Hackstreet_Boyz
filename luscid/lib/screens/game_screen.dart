@@ -41,16 +41,25 @@ class _GameScreenState extends State<GameScreen> {
     final gameProvider = context.read<GameProvider>();
     final authProvider = context.read<AuthProvider>();
     final room = gameProvider.room;
-    final currentUserId = authProvider.userId;
+    
+    // Use gameProvider's currentUserId (set during room creation/join)
+    // Fall back to authProvider if needed
+    final currentUserId = gameProvider.currentUserId ?? authProvider.userId;
+    final userName = authProvider.user?.displayName ?? 'Player';
+    
+    debugPrint('[GameScreen] Voice chat init: isMultiplayer=${gameProvider.isMultiplayer}, room=${room?.roomCode}, userId=$currentUserId');
     
     if (gameProvider.isMultiplayer && room != null && currentUserId != null) {
       _voiceChat = VoiceChatService(
-        roomId: room.roomCode,
+        roomId: 'memory_${room.roomCode}',
         userId: currentUserId,
-        userName: authProvider.user?.displayName ?? 'Player',
+        userName: userName,
       );
       _voiceChat!.joinRoom();
       _voiceChat!.addListener(_onVoiceChatChanged);
+      debugPrint('[GameScreen] Voice chat service created and joined!');
+    } else {
+      debugPrint('[GameScreen] Voice chat NOT initialized - conditions not met');
     }
   }
 

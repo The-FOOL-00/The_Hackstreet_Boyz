@@ -67,6 +67,7 @@ class GameProvider extends ChangeNotifier {
   String? get error => _error;
   String? get message => _message;
   bool get isMultiplayer => _mode == GameMode.multiplayer;
+  String? get currentUserId => _currentUserId;
   bool get isMyTurn {
     if (_isBotGame) return !_isBotTurn;
     if (!isMultiplayer) return true;

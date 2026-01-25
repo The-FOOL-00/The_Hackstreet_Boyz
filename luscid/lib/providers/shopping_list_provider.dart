@@ -26,6 +26,8 @@ class ShoppingListProvider extends ChangeNotifier {
   String? get error => _error;
   bool get isHost => _room?.hostId == _currentUserId;
   bool get isInRoom => _room != null;
+  String? get currentUserId => _currentUserId;
+  bool get isMultiplayer => _room?.guestId != null;
   int get timeRemaining => _timeRemaining;
 
   ShoppingGamePhase get phase => _room?.phase ?? ShoppingGamePhase.waiting;

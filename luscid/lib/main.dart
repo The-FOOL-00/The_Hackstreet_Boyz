@@ -33,6 +33,7 @@ import 'screens/shopping_game_screen.dart';
 import 'screens/shopping_game_setup_screen.dart';
 import 'screens/user_search_screen.dart';
 import 'screens/notifications_screen.dart';
+import 'screens/caregiver_dashboard_screen.dart';
 
 /// Main entry point for the Luscid Memory Game app
 /// An elderly-friendly memory matching game with Firebase integration
@@ -124,6 +125,8 @@ class LuscidApp extends StatelessWidget {
           // Shopping list game
           '/shopping-game': (context) => const ShoppingGameScreen(),
           '/shopping-game-setup': (context) => const ShoppingGameSetupScreen(),
+          // Caregiver dashboard
+          '/caregiver': (context) => const CaregiverDashboardScreen(),
         },
 
         // Custom page transitions for elderly-friendly navigation

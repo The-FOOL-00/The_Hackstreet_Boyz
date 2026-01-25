@@ -374,6 +374,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             },
                           ),
                           const SizedBox(height: 14),
+                          // Caregiver Dashboard
+                          LargeButton(
+                            text: 'Caregiver View',
+                            subtitle: 'Family monitoring',
+                            emoji: '👨‍👩‍👧',
+                            isPrimary: false,
+                            onPressed: () {
+                              Navigator.of(context).pushNamed('/caregiver');
+                            },
+                          ),
+                          const SizedBox(height: 14),
                           // Phone Login Test
                           LargeButton(
                             text: 'Phone Login',

@@ -6,6 +6,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../core/constants/colors.dart';
 
 class PhoneAuthScreen extends StatefulWidget {
   const PhoneAuthScreen({super.key});
@@ -100,7 +101,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6B9080),
+                    color: AppColors.primaryBlue,
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: const Icon(
@@ -269,7 +270,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _sendOtp,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6B9080),
+                      backgroundColor: AppColors.primaryBlue,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -301,18 +302,18 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE8F0ED),
+                    color: AppColors.primarySoft,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline, color: Color(0xFF6B9080)),
+                      Icon(Icons.info_outline, color: AppColors.primaryBlue),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'We\'ll send you a one-time code to verify your phone number.',
                           style: GoogleFonts.poppins(
-                            color: const Color(0xFF5C6B66),
+                            color: AppColors.textSecondary,
                             fontSize: 14,
                           ),
                         ),

@@ -154,6 +154,25 @@ class LocalStorageService {
     return saveActivities(activities);
   }
 
+  // ==================== Generic Key-Value Storage ====================
+
+  /// Gets a string value synchronously (requires init to be called first)
+  String? getString(String key) {
+    return _prefs?.getString(key);
+  }
+
+  /// Sets a string value synchronously (requires init to be called first)
+  Future<bool> setString(String key, String value) async {
+    final p = await prefs;
+    return p.setString(key, value);
+  }
+
+  /// Gets a string value asynchronously
+  Future<String?> getStringAsync(String key) async {
+    final p = await prefs;
+    return p.getString(key);
+  }
+
   // ==================== Clear All Data ====================
 
   /// Clears all local storage data

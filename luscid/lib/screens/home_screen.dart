@@ -3,28 +3,136 @@
 /// Stitch Design: Header with pill badge, card-style nav buttons, decorative circles.
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/colors.dart';
 import '../core/constants/text_styles.dart';
 import '../core/utils/helpers.dart';
-import '../providers/auth_provider.dart';
-import '../providers/game_provider.dart';
 import '../widgets/large_button.dart';
+import '../widgets/buddy_fab.dart';
+import '../widgets/buddy_popup.dart';
+import '../providers/activity_provider.dart';
+import '../models/activity_model.dart';
+import '../services/reminder_service.dart';
 import 'game_mode_screen.dart';
-import 'multiplayer_hub_screen.dart';
 import 'activity_screen.dart';
 import 'help_screen.dart';
 import 'buddy_circle_screen.dart';
 import 'phone_auth_screen.dart';
 import '../widgets/notification_bell.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final ReminderService _reminderService = ReminderService();
+
+  @override
+  void initState() {
+    super.initState();
+    _setupReminderService();
+  }
+
+  void _setupReminderService() async {
+    await _reminderService.init();
+    
+    // Set up notification tap handler
+    _reminderService.onNotificationTapped = (payload) {
+      if (payload != null && payload.startsWith('overdue_task:')) {
+        final activityId = payload.replaceFirst('overdue_task:', '');
+        // Show Buddy popup for the overdue task
+        if (mounted) {
+          showBuddyReminderPopup(
+            context,
+            activityId: activityId,
+            userName: 'friend', // TODO: Get from user profile
+          );
+        }
+      }
+    };
+    
+    // Set up activity provider reminder callback
+    final activities = context.read<ActivityProvider>();
+    activities.onReminderTriggered = (activity) async {
+      await _reminderService.showOverdueReminder(activity, userName: 'friend');
+    };
+  }
+
+  /// Simulate medicine reminder (for testing)
+  void _simulateMedicineReminder() async {
+    final activities = context.read<ActivityProvider>();
+    
+    debugPrint('🧪 Testing medicine reminder...');
+    debugPrint('📋 Total activities: ${activities.activities.length}');
+    
+    // If medicine activity doesn't exist, reset activities first
+    final hasMedicine = activities.activities.any((a) => a.id == 'take_medicine');
+    if (!hasMedicine) {
+      debugPrint('⚠️ Medicine not found, resetting activities...');
+      await activities.resetActivities();
+      debugPrint('📋 After reset: ${activities.activities.length} activities');
+    }
+    
+    // Find the medicine activity
+    ActivityModel? medicineActivity;
+    try {
+      medicineActivity = activities.activities.firstWhere(
+        (a) => a.id == 'take_medicine',
+      );
+    } catch (e) {
+      debugPrint('❌ Medicine activity still not found after reset!');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not load medicine activity. Try restarting the app.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    debugPrint('✅ Found medicine: ${medicineActivity.title}, completed: ${medicineActivity.isCompleted}');
+    
+    if (medicineActivity.isCompleted) {
+      // Reset activities to test again
+      await activities.resetActivities();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Activities reset! Tap again to test reminder.'),
+          backgroundColor: Colors.blue,
+        ),
+      );
+      return;
+    }
+    
+    // Show notification on mobile
+    try {
+      await _reminderService.showOverdueReminder(
+        medicineActivity,
+        userName: 'friend',
+      );
+      debugPrint('🔔 Notification sent');
+    } catch (e) {
+      debugPrint('⚠️ Notification error: $e');
+    }
+    
+    // Show the Buddy popup directly
+    if (mounted) {
+      debugPrint('💬 Showing Buddy popup...');
+      await showBuddyReminderPopup(
+        context,
+        activityId: 'take_medicine',
+        userName: 'friend',
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
     final greeting = Helpers.getGreeting();
 
     return Scaffold(
@@ -57,7 +165,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
-          // Main content
+          // Main content area
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -221,27 +329,6 @@ class HomeScreen extends StatelessWidget {
                             },
                           ),
                           const SizedBox(height: 14),
-                          // Multiplayer Games
-                          LargeButton(
-                            text: 'Multiplayer Games',
-                            subtitle: 'Play with others',
-                            emoji: '🎮',
-                            isPrimary: false,
-                            onPressed: () {
-                              // Set user ID for multiplayer
-                              final gameProvider = context.read<GameProvider>();
-                              gameProvider.setCurrentUserId(
-                                authProvider.userId ??
-                                    'user_${DateTime.now().millisecondsSinceEpoch}',
-                              );
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const MultiplayerHubScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 14),
                           // Play with Friends (Buddy Circle)
                           LargeButton(
                             text: 'Play With Friends',
@@ -287,6 +374,17 @@ class HomeScreen extends StatelessWidget {
                             },
                           ),
                           const SizedBox(height: 14),
+                          // Caregiver Dashboard
+                          LargeButton(
+                            text: 'Caregiver View',
+                            subtitle: 'Family monitoring',
+                            emoji: '👨‍👩‍👧',
+                            isPrimary: false,
+                            onPressed: () {
+                              Navigator.of(context).pushNamed('/caregiver');
+                            },
+                          ),
+                          const SizedBox(height: 14),
                           // Phone Login Test
                           LargeButton(
                             text: 'Phone Login',
@@ -301,6 +399,15 @@ class HomeScreen extends StatelessWidget {
                               );
                             },
                           ),
+                          const SizedBox(height: 14),
+                          // Test Medicine Reminder (Demo)
+                          LargeButton(
+                            text: 'Test Reminder',
+                            subtitle: 'Simulate medicine alert',
+                            emoji: '💊',
+                            isPrimary: false,
+                            onPressed: _simulateMedicineReminder,
+                          ),
                           const SizedBox(height: 24),
                         ],
                       ),
@@ -309,6 +416,12 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+          // Floating Buddy FAB - bottom right corner
+          Positioned(
+            bottom: 100,
+            right: 20,
+            child: BuddyFab(),
           ),
         ],
       ),

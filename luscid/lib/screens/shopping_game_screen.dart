@@ -6,6 +6,8 @@ library;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../core/constants/colors.dart';
+import '../core/constants/text_styles.dart';
 import '../providers/shopping_list_provider.dart';
 import '../services/shopping_list_service.dart';
 
@@ -39,12 +41,12 @@ class _ShoppingGameScreenState extends State<ShoppingGameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F5F2),
+      backgroundColor: AppColors.backgroundLight,
       body: Consumer<ShoppingListProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading) {
             return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF6B9080)),
+              child: CircularProgressIndicator(color: AppColors.primaryBlue),
             );
           }
 
@@ -52,18 +54,144 @@ class _ShoppingGameScreenState extends State<ShoppingGameScreen> {
             return _buildErrorState(provider);
           }
 
+          // Wrap content in Stack to add close button
+          Widget phaseContent;
           switch (provider.phase) {
             case ShoppingGamePhase.waiting:
-              return _WaitingPhase(provider: provider);
+              phaseContent = _WaitingPhase(provider: provider);
+              break;
             case ShoppingGamePhase.memorize:
-              return _MemorizePhase(provider: provider);
+              phaseContent = _MemorizePhase(provider: provider);
+              break;
             case ShoppingGamePhase.selection:
-              return _SelectionPhase(provider: provider);
+              phaseContent = _SelectionPhase(provider: provider);
+              break;
             case ShoppingGamePhase.results:
             case ShoppingGamePhase.finished:
-              return _ResultsPhase(provider: provider);
+              phaseContent = _ResultsPhase(provider: provider);
+              break;
           }
+
+          // Don't show exit button on results phase
+          if (provider.phase == ShoppingGamePhase.results ||
+              provider.phase == ShoppingGamePhase.finished) {
+            return phaseContent;
+          }
+
+          return Stack(
+            children: [
+              phaseContent,
+              // Exit button positioned at top-left
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 12,
+                left: 16,
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundWhite,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.borderBlue),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.shadowSoft,
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    color: AppColors.textPrimary,
+                    onPressed: () => _showExitConfirmation(context, provider),
+                  ),
+                ),
+              ),
+            ],
+          );
         },
+      ),
+    );
+  }
+
+  void _showExitConfirmation(BuildContext context, ShoppingListProvider provider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: AppColors.backgroundWhite,
+        title: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: Text('🚪', style: TextStyle(fontSize: 22)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text('Leave Game?', style: AppTextStyles.heading4),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to leave? Your progress will be lost.',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        actionsPadding: const EdgeInsets.all(16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: const BorderSide(color: AppColors.borderBlue),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    'Stay',
+                    style: AppTextStyles.buttonMedium.copyWith(
+                      color: AppColors.primaryBlue,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    provider.leaveRoom();
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'Leave',
+                    style: AppTextStyles.buttonMedium.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

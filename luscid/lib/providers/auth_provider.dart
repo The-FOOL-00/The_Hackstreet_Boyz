@@ -7,10 +7,14 @@ import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/local_storage_service.dart';
+import '../services/push_notification_service.dart';
+import '../services/notification_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   late final AuthService _authService;
   late final LocalStorageService _localStorage;
+  final PushNotificationService _pushService = PushNotificationService();
+  final NotificationService _notificationService = NotificationService();
   bool _initialized = false;
 
   UserModel? _user;
@@ -71,6 +75,17 @@ class AuthProvider extends ChangeNotifier {
       if (user != null) {
         _user = user;
         _isFirstLaunch = false;
+        
+        // Initialize push notifications
+        await _pushService.init(user.uid);
+        await _pushService.setOnlineStatus(true);
+        
+        // Notify buddies user is online
+        await _notificationService.notifyBuddiesOnline(
+          userId: user.uid,
+          userName: user.displayName ?? 'A friend',
+        );
+        
         notifyListeners();
         return true;
       }
@@ -93,6 +108,17 @@ class AuthProvider extends ChangeNotifier {
       final user = await _authService.signInWithPin(pin);
       if (user != null) {
         _user = user;
+        
+        // Initialize push notifications
+        await _pushService.init(user.uid);
+        await _pushService.setOnlineStatus(true);
+        
+        // Notify buddies user is online
+        await _notificationService.notifyBuddiesOnline(
+          userId: user.uid,
+          userName: user.displayName ?? 'A friend',
+        );
+        
         notifyListeners();
         return true;
       }
@@ -110,6 +136,9 @@ class AuthProvider extends ChangeNotifier {
   Future<void> signOut() async {
     _setLoading(true);
     try {
+      // Clean up push notifications
+      await _pushService.logout();
+      
       await _authService.signOut();
       _user = null;
     } catch (e) {

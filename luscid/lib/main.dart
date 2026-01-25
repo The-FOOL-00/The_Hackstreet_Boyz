@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
 
 import 'core/theme/app_theme.dart';
@@ -12,7 +13,9 @@ import 'providers/invite_provider.dart';
 import 'providers/shopping_list_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/trivia_provider.dart';
+import 'providers/avatar_provider.dart';
 import 'services/local_storage_service.dart';
+import 'services/push_notification_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/pin_entry_screen.dart';
 import 'screens/role_select_screen.dart';
@@ -31,6 +34,7 @@ import 'screens/shopping_game_screen.dart';
 import 'screens/shopping_game_setup_screen.dart';
 import 'screens/user_search_screen.dart';
 import 'screens/notifications_screen.dart';
+import 'screens/caregiver_dashboard_screen.dart';
 
 /// Main entry point for the Luscid Memory Game app
 /// An elderly-friendly memory matching game with Firebase integration
@@ -40,6 +44,9 @@ void main() async {
 
   // Initialize Firebase
   await Firebase.initializeApp();
+
+  // Set up background message handler for FCM
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   // Initialize local storage service
   await LocalStorageService.init();
@@ -87,6 +94,8 @@ class LuscidApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         // Trivia game provider for CineRecall
         ChangeNotifierProvider(create: (_) => TriviaProvider()),
+        // Avatar AI provider for memory coaching
+        ChangeNotifierProvider(create: (_) => AvatarProvider()),
       ],
       child: MaterialApp(
         title: 'Luscid - Memory Game',
@@ -119,6 +128,8 @@ class LuscidApp extends StatelessWidget {
           // Shopping list game
           '/shopping-game': (context) => const ShoppingGameScreen(),
           '/shopping-game-setup': (context) => const ShoppingGameSetupScreen(),
+          // Caregiver dashboard
+          '/caregiver': (context) => const CaregiverDashboardScreen(),
         },
 
         // Custom page transitions for elderly-friendly navigation

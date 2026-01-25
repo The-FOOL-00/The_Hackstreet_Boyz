@@ -458,6 +458,8 @@ class _NotificationCard extends StatelessWidget {
         return Icons.sports_esports;
       case NotificationType.gameStarting:
         return Icons.play_arrow;
+      case NotificationType.friendOnline:
+        return Icons.circle;
       case NotificationType.message:
         return Icons.message;
     }
@@ -473,6 +475,8 @@ class _NotificationCard extends StatelessWidget {
         return Colors.orange;
       case NotificationType.gameStarting:
         return Colors.purple;
+      case NotificationType.friendOnline:
+        return Colors.teal;
       case NotificationType.message:
         return const Color(0xFF6B9080);
     }

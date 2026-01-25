@@ -14,7 +14,6 @@ import '../providers/shopping_list_provider.dart';
 import 'difficulty_select_screen.dart';
 import 'game_screen.dart';
 import 'shopping_game_screen.dart';
-import 'multiplayer_hub_screen.dart';
 import 'multiplayer_setup_screen.dart';
 import 'shopping_multiplayer_setup_screen.dart';
 
@@ -217,10 +216,17 @@ class GameModeScreen extends StatelessWidget {
   }
 
   void _navigateToMultiplayer(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const MultiplayerHubScreen()),
-    );
+    if (gameType == GameType.memory) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const MultiplayerSetupScreen()),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ShoppingMultiplayerSetupScreen()),
+      );
+    }
   }
 }
 

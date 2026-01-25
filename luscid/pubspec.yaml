@@ -15,6 +15,8 @@ dependencies:
   firebase_auth: ^6.1.4
   firebase_database: ^12.1.2
   firebase_storage: ^13.0.6
+  firebase_messaging: ^16.0.0
+  flutter_local_notifications: ^18.0.1
   
   # State Management
   provider: ^6.1.1
@@ -35,6 +37,11 @@ dependencies:
   
   # WebRTC for P2P Audio
   flutter_webrtc: ^0.12.12
+  
+  # AI Avatar - Speech & Gemini
+  speech_to_text: ^7.0.0
+  flutter_tts: ^4.2.0
+  google_generative_ai: ^0.4.7
 
 dev_dependencies:
   flutter_test:
@@ -45,3 +52,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  
+  assets:
+    - assets/images/

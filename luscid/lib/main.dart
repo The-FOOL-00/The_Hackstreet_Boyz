@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
 
 import 'core/theme/app_theme.dart';
@@ -11,7 +12,9 @@ import 'providers/buddy_list_provider.dart';
 import 'providers/invite_provider.dart';
 import 'providers/shopping_list_provider.dart';
 import 'providers/notification_provider.dart';
+import 'providers/avatar_provider.dart';
 import 'services/local_storage_service.dart';
+import 'services/push_notification_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/pin_entry_screen.dart';
 import 'screens/role_select_screen.dart';
@@ -39,6 +42,9 @@ void main() async {
 
   // Initialize Firebase
   await Firebase.initializeApp();
+
+  // Set up background message handler for FCM
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   // Initialize local storage service
   await LocalStorageService.init();
@@ -84,6 +90,8 @@ class LuscidApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ShoppingListProvider()),
         // Notification provider for in-app notifications
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        // Avatar AI provider for memory coaching
+        ChangeNotifierProvider(create: (_) => AvatarProvider()),
       ],
       child: MaterialApp(
         title: 'Luscid - Memory Game',

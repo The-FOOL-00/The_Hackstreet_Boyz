@@ -4,15 +4,12 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../core/constants/colors.dart';
 import '../core/constants/text_styles.dart';
 import '../core/utils/helpers.dart';
-import '../providers/auth_provider.dart';
-import '../providers/game_provider.dart';
 import '../widgets/large_button.dart';
+import '../widgets/buddy_fab.dart';
 import 'game_mode_screen.dart';
-import 'multiplayer_hub_screen.dart';
 import 'activity_screen.dart';
 import 'help_screen.dart';
 import 'buddy_circle_screen.dart';
@@ -24,7 +21,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
     final greeting = Helpers.getGreeting();
 
     return Scaffold(
@@ -57,7 +53,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
-          // Main content
+          // Main content area
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -221,27 +217,6 @@ class HomeScreen extends StatelessWidget {
                             },
                           ),
                           const SizedBox(height: 14),
-                          // Multiplayer Games
-                          LargeButton(
-                            text: 'Multiplayer Games',
-                            subtitle: 'Play with others',
-                            emoji: '🎮',
-                            isPrimary: false,
-                            onPressed: () {
-                              // Set user ID for multiplayer
-                              final gameProvider = context.read<GameProvider>();
-                              gameProvider.setCurrentUserId(
-                                authProvider.userId ??
-                                    'user_${DateTime.now().millisecondsSinceEpoch}',
-                              );
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const MultiplayerHubScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 14),
                           // Play with Friends (Buddy Circle)
                           LargeButton(
                             text: 'Play With Friends',
@@ -309,6 +284,12 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+          // Floating Buddy FAB - bottom right corner
+          Positioned(
+            bottom: 100,
+            right: 20,
+            child: BuddyFab(),
           ),
         ],
       ),

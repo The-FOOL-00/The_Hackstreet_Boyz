@@ -4,7 +4,6 @@
 library;
 
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 /// Notification types
@@ -13,6 +12,7 @@ enum NotificationType {
   buddyAccepted,
   gameInvite,
   gameStarting,
+  friendOnline,
   message,
 }
 
@@ -312,5 +312,48 @@ class NotificationService {
   Future<void> removeBuddy(String myUserId, String buddyUserId) async {
     await _database.ref('buddies/$myUserId/$buddyUserId').remove();
     await _database.ref('buddies/$buddyUserId/$myUserId').remove();
+  }
+
+  /// Notify all buddies that user is online
+  Future<void> notifyBuddiesOnline({
+    required String userId,
+    required String userName,
+  }) async {
+    final buddyIds = await getBuddyIds(userId);
+    
+    for (final buddyId in buddyIds) {
+      await sendNotification(
+        toUserId: buddyId,
+        type: NotificationType.friendOnline,
+        title: 'Friend Online! 👋',
+        body: '$userName is now online. Send them a game invite!',
+        fromUserId: userId,
+        fromUserName: userName,
+        data: {'type': 'friend_online', 'friendId': userId},
+      );
+    }
+  }
+
+  /// Send game invite notification
+  Future<void> sendGameInvite({
+    required String toUserId,
+    required String fromUserId,
+    required String fromUserName,
+    required String gameType,
+    required String roomCode,
+  }) async {
+    await sendNotification(
+      toUserId: toUserId,
+      type: NotificationType.gameInvite,
+      title: 'Game Invite! 🎮',
+      body: '$fromUserName invited you to play ${gameType == 'memory' ? 'Memory Game' : 'Shopping List'}!',
+      fromUserId: fromUserId,
+      fromUserName: fromUserName,
+      data: {
+        'type': 'game_invite',
+        'gameType': gameType,
+        'roomCode': roomCode,
+      },
+    );
   }
 }

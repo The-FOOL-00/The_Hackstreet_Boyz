@@ -6,14 +6,14 @@ library;
 
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class GeminiService {
   static final GeminiService _instance = GeminiService._internal();
   factory GeminiService() => _instance;
   GeminiService._internal();
 
-  // Default API key for Luscid project
-  static const String _defaultApiKey = 'AIzaSyDMjDL2OLBjKSvZ9dG60xgB7o27DOKTT9Q';
+  // No hardcoded API key here. Use `.env` (dev) or provide key at runtime.
 
   GenerativeModel? _model;
   ChatSession? _chat;
@@ -71,7 +71,13 @@ RESPONSE STYLE:
   Future<void> init([String? apiKey]) async {
     if (_isInitialized && _model != null) return;
 
-    final key = apiKey ?? _defaultApiKey;
+    // Prefer explicit apiKey, then .env GEMINI_API_KEY (dev), otherwise fail
+    final key = apiKey ?? dotenv.env['GEMINI_API_KEY'];
+
+    if (key == null || key.isEmpty) {
+      throw Exception('No Gemini API key provided. Add GEMINI_API_KEY to .env or pass a key at runtime.');
+    }
+
     try {
       _model = GenerativeModel(
         model: 'gemini-2.0-flash',

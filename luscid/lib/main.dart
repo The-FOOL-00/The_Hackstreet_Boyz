@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
 
@@ -41,6 +42,14 @@ import 'screens/caregiver_dashboard_screen.dart';
 void main() async {
   // Ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load local env (dev only)
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    // If .env not present, continue — app can still run with user-provided key or scripted fallback
+    debugPrint('No .env file loaded: $e');
+  }
 
   // Initialize Firebase
   await Firebase.initializeApp();

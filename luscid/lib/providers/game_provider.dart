@@ -221,32 +221,41 @@ class GameProvider extends ChangeNotifier {
 
   /// Sets the current user ID for multiplayer
   void setCurrentUserId(String userId) {
+    debugPrint('[GameProvider] setCurrentUserId: $userId');
     _currentUserId = userId;
+    debugPrint('[GameProvider] _currentUserId is now: $_currentUserId');
   }
 
   /// Creates a new multiplayer room
   Future<String?> createRoom(GameDifficulty difficulty) async {
+    debugPrint('[GameProvider] createRoom started, userId=$_currentUserId');
     _setLoading(true);
     _clearError();
 
     try {
       if (_currentUserId == null) {
+        debugPrint('[GameProvider] createRoom ERROR: User not logged in');
         throw Exception('User not logged in');
       }
 
+      debugPrint('[GameProvider] Creating room in Firebase...');
       _room = await _firebaseService.createRoom(
         hostId: _currentUserId!,
         difficulty: difficulty,
       );
+      debugPrint('[GameProvider] Room created: ${_room?.roomCode}, status=${_room?.status}');
       _mode = GameMode.multiplayer;
       _difficulty = difficulty;
 
       // Start listening to room changes
+      debugPrint('[GameProvider] Subscribing to room changes...');
       _subscribeToRoom(_room!.roomCode);
 
       _setLoading(false);
+      debugPrint('[GameProvider] createRoom SUCCESS, returning code: ${_room!.roomCode}');
       return _room!.roomCode;
     } catch (e) {
+      debugPrint('[GameProvider] createRoom ERROR: $e');
       _error = e.toString();
       _setLoading(false);
       return null;
@@ -351,7 +360,7 @@ class GameProvider extends ChangeNotifier {
 
       // Log real-time sync confirmation
       debugPrint(
-        '[GameProvider] 🔄 Real-time sync: cards updated, total flipped=${flippedCount}, matched=${matchedCount}, isMyTurn=${room.currentTurn == _currentUserId}',
+        '[GameProvider] 🔄 Real-time sync: cards updated, total flipped=$flippedCount, matched=$matchedCount, isMyTurn=${room.currentTurn == _currentUserId}',
       );
 
       notifyListeners();
@@ -360,6 +369,7 @@ class GameProvider extends ChangeNotifier {
 
   /// Leaves the current room
   Future<void> leaveRoom() async {
+    debugPrint('[GameProvider] leaveRoom called, _currentUserId=$_currentUserId');
     _roomSubscription?.cancel();
     _roomSubscription = null;
 
@@ -367,6 +377,7 @@ class GameProvider extends ChangeNotifier {
         _room!.hostId == _currentUserId &&
         _room!.status == GameRoomStatus.waiting) {
       // Host leaving waiting room - delete it
+      debugPrint('[GameProvider] Deleting room ${_room!.roomCode}');
       await _firebaseService.deleteRoom(_room!.roomCode);
     }
 
@@ -374,6 +385,7 @@ class GameProvider extends ChangeNotifier {
     _mode = GameMode.singlePlayer;
     _state = GameState.idle;
     _cards = [];
+    debugPrint('[GameProvider] leaveRoom complete, _currentUserId still=$_currentUserId');
     notifyListeners();
   }
 

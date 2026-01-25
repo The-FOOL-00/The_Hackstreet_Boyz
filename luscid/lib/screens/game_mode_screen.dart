@@ -251,6 +251,11 @@ class GameModeScreen extends StatelessWidget {
   void _navigateToMultiplayer(BuildContext context) {
     switch (gameType) {
       case GameType.memory:
+        // Set user ID for multiplayer before navigating
+        final gameProvider = context.read<GameProvider>();
+        final userId = 'user_${DateTime.now().millisecondsSinceEpoch}';
+        gameProvider.setCurrentUserId(userId);
+        
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const MultiplayerSetupScreen()),

@@ -15,7 +15,7 @@ class NotificationProvider extends ChangeNotifier {
   List<AppNotification> _notifications = [];
   List<Map<String, dynamic>> _buddyRequests = [];
   int _unreadCount = 0;
-  bool _isLoading = false;
+  final bool _isLoading = false;
   String? _error;
 
   StreamSubscription<List<AppNotification>>? _notificationSubscription;

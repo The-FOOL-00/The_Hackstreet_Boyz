@@ -90,9 +90,10 @@ class MultiplayerHubScreen extends StatelessWidget {
                 onTap: () {
                   // Set user ID for multiplayer
                   final gameProvider = context.read<GameProvider>();
-                  gameProvider.setCurrentUserId(
-                    'user_${DateTime.now().millisecondsSinceEpoch}',
-                  );
+                  final userId = 'user_${DateTime.now().millisecondsSinceEpoch}';
+                  debugPrint('[MultiplayerHub] Setting user ID: $userId');
+                  gameProvider.setCurrentUserId(userId);
+                  debugPrint('[MultiplayerHub] Navigating to MultiplayerSetupScreen');
                   Navigator.push(
                     context,
                     MaterialPageRoute(

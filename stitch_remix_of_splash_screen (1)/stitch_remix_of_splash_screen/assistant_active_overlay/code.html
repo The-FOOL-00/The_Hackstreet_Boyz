@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lucid Assistant Overlay</title>
+<!-- Google Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary": "#f27f0d",
+                "background-light": "#f8f7f5",
+                "background-dark": "#221910",
+                "pale-blue": "#F0F8FF",
+                "dark-slate": "#2F4F4F",
+              },
+              fontFamily: {
+                "display": ["Lexend"]
+              },
+              borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+<style>
+        .dialogue-bubble::after {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 12px solid white;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display min-h-screen flex flex-col justify-end">
+<!-- Screen Backdrop (Simulating the background app) -->
+<div class="fixed inset-0 z-0 bg-[#141414]/50 flex flex-col p-4">
+<!-- Mock Main Content Behind -->
+<div class="w-full h-32 bg-white/20 rounded-xl mb-4"></div>
+<div class="w-full h-32 bg-white/20 rounded-xl mb-4"></div>
+</div>
+<!-- Assistant Active Overlay (Bottom Sheet) -->
+<div class="relative z-10 w-full max-w-[480px] mx-auto flex flex-col items-stretch bg-pale-blue rounded-t-xl shadow-2xl">
+<!-- BottomSheetHandle -->
+<div class="flex h-6 w-full items-center justify-center">
+<div class="h-1.5 w-12 rounded-full bg-[#d1e3f0]"></div>
+</div>
+<!-- TopAppBar (Close Button) -->
+<div class="flex items-center justify-end px-4">
+<button aria-label="Close" class="flex h-12 w-12 items-center justify-center rounded-full bg-white/50 text-dark-slate hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-[28px]">close</span>
+</button>
+</div>
+<!-- Mascot Illustration -->
+<div class="flex flex-col items-center px-6 pt-2 pb-6">
+<div class="w-40 h-40 relative flex items-center justify-center rounded-full bg-white/40 mb-4 border-4 border-white/60 overflow-hidden">
+<!-- Mascot Image (Friendly Cat) -->
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Friendly ginger cartoon cat assistant smiling" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBnAwR_Bxcqy26x487ugjReBZ2p7I70MkP_-9dIkritaawu60JLXngDocBGvW9f9KZ9n4ZhsRxtCInzdc3t50o7Him-_tfhqF07wzFWAt4oUqIdJ07Nq-ICYT0qeTw6RS3oacD_YQ3KWNJGSFHdp_zFK92iPhSmFQrwH9So8AE17g89IXHhtLKljz5wgYlqBLkMBnbz9r-pmxLtRtZPn-mBV7Zla7enHfTMCSxUJMtix0JTa0aAvbiMk5znjvScFPG6y0GijM5YoA");'>
+</div>
+</div>
+<!-- Dialogue Bubble & Headline -->
+<div class="relative dialogue-bubble bg-white rounded-xl p-6 shadow-sm w-full max-w-sm mb-8">
+<h2 class="text-dark-slate tracking-tight text-[24px] font-bold leading-snug text-center">
+                    Good morning! Did you take your medicine yet?
+                </h2>
+</div>
+<!-- ButtonGroup -->
+<div class="flex flex-col gap-4 w-full">
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-5 bg-primary text-white text-lg font-bold leading-normal tracking-[0.015em] w-full shadow-lg shadow-primary/20 active:scale-95 transition-transform">
+<span class="truncate">Yes, I did</span>
+</button>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-5 bg-white text-dark-slate text-lg font-bold leading-normal tracking-[0.015em] w-full border-2 border-[#e0eaf2] active:scale-95 transition-transform">
+<span class="truncate">Not yet</span>
+</button>
+</div>
+</div>
+<!-- Safe Area Spacer -->
+<div class="h-8 w-full bg-pale-blue"></div>
+</div>
+</body></html>

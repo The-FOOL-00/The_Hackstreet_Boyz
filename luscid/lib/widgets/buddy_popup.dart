@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/avatar_provider.dart';
 import '../providers/activity_provider.dart';
+import '../models/activity_model.dart';
 
 /// Show Buddy popup from anywhere (legacy - slides up from bottom)
 Future<void> showBuddyPopup(BuildContext context, {String? scenario}) async {
@@ -28,6 +29,43 @@ Future<void> showBuddyPopup(BuildContext context, {String? scenario}) async {
               CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
             ),
         child: child,
+      );
+    },
+  );
+}
+
+/// Show Buddy popup for an overdue task reminder
+Future<void> showBuddyReminderPopup(
+  BuildContext context, {
+  required String activityId,
+  String? userName,
+}) async {
+  await showGeneralDialog(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: 'Buddy Reminder',
+    barrierColor: Colors.black54,
+    transitionDuration: const Duration(milliseconds: 400),
+    pageBuilder: (context, animation, secondaryAnimation) {
+      return BuddyPopup(
+        scenario: 'overdue_reminder',
+        overdueActivityId: activityId,
+        userName: userName,
+      );
+    },
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      final scaleAnimation = CurvedAnimation(
+        parent: animation,
+        curve: Curves.elasticOut,
+      );
+      
+      return ScaleTransition(
+        scale: Tween<double>(begin: 0.0, end: 1.0).animate(scaleAnimation),
+        alignment: Alignment.center,
+        child: FadeTransition(
+          opacity: animation,
+          child: child,
+        ),
       );
     },
   );
@@ -71,8 +109,16 @@ Future<void> showBuddyPopupFromFab(
 class BuddyPopup extends StatefulWidget {
   final String? scenario;
   final Offset? fabPosition;
+  final String? overdueActivityId;
+  final String? userName;
 
-  const BuddyPopup({super.key, this.scenario, this.fabPosition});
+  const BuddyPopup({
+    super.key, 
+    this.scenario, 
+    this.fabPosition,
+    this.overdueActivityId,
+    this.userName,
+  });
 
   @override
   State<BuddyPopup> createState() => _BuddyPopupState();
@@ -206,9 +252,101 @@ class _BuddyPopupState extends State<BuddyPopup> with TickerProviderStateMixin {
       case 'evening':
         avatar.triggerEveningWrapUp();
         break;
+      case 'overdue_reminder':
+        _handleOverdueReminder(avatar);
+        break;
       default:
         _smartGreeting(avatar, context.read<ActivityProvider>());
     }
+  }
+
+  // Track if we're in a reminder conversation (waiting for user response)
+  bool _isReminderConversation = false;
+  String? _pendingReminderActivityId;
+
+  void _handleOverdueReminder(AvatarProvider avatar) {
+    final userName = widget.userName ?? 'friend';
+    final activityId = widget.overdueActivityId;
+    
+    // Store the activity we're reminding about for follow-up
+    _pendingReminderActivityId = activityId;
+    _isReminderConversation = true;
+    
+    // Start with a gentle, open-ended question
+    final message = "Hey $userName! 💙 Do you think we left out anything on the to-do list which was due?";
+    
+    avatar.speak(message, mood: AvatarMood.happy);
+  }
+
+  /// Handle user's response during a reminder conversation
+  Future<String?> _handleReminderResponse(String input, ActivityProvider activities) async {
+    if (!_isReminderConversation) return null;
+    
+    final lower = input.toLowerCase();
+    final userName = widget.userName ?? 'friend';
+    
+    // Check if user acknowledges they'll do the task
+    final positivePatterns = [
+      'yes', 'yeah', 'yep', 'yup', 'i will', "i'll", 'will do', 'taking', 'took',
+      'medicine', 'tablet', 'pill', 'medication', 'on it', 'doing it', 'right now',
+      'forgot', 'let me', 'going to', 'gonna', 'sure', 'ok', 'okay', 'thanks',
+    ];
+    
+    final isPositive = positivePatterns.any((p) => lower.contains(p));
+    
+    if (isPositive) {
+      // User acknowledged - appreciate them and mark as complete if they mention medicine
+      _isReminderConversation = false;
+      
+      // Check if they're completing the task
+      if (lower.contains('medicine') || lower.contains('tablet') || 
+          lower.contains('pill') || lower.contains('took') || lower.contains('taking')) {
+        // Mark the medicine task as complete
+        await activities.completeActivityByKeyword('medicine');
+        
+        return "That's wonderful, $userName! 🌟 I'm so proud of you for staying on top of things. "
+            "Taking care of yourself is the best gift you can give! Keep it up! 💪😊";
+      }
+      
+      // General positive acknowledgment
+      return "Great! 😊 I knew you had it covered, $userName. "
+          "You're doing amazing - keep being awesome! 💙";
+    }
+    
+    // Check if user says no or denies
+    final negativePatterns = ['no', 'nope', 'nah', "don't think", 'nothing', 'all done', 'completed'];
+    final isNegative = negativePatterns.any((p) => lower.contains(p));
+    
+    if (isNegative) {
+      // User says no - gently remind them
+      _isReminderConversation = false;
+      
+      // Find what's overdue
+      final overdue = activities.overdueActivities;
+      if (overdue.isNotEmpty) {
+        final overdueNames = overdue.map((a) => a.title).join(', ');
+        return "Hmm, just a gentle thought... 💭 I noticed $overdueNames might still be pending. "
+            "No rush at all! But when you get a moment, it might be good to check on those. "
+            "I believe in you, $userName! 💙";
+      }
+      
+      return "Okay! If you're all caught up, that's fantastic! 🎉 "
+          "You're doing great today, $userName!";
+    }
+    
+    // Unclear response - provide a gentle nudge
+    _isReminderConversation = false;
+    
+    final overdue = activities.overdueActivities;
+    if (overdue.isNotEmpty && _pendingReminderActivityId != null) {
+      try {
+        final activity = activities.activities.firstWhere((a) => a.id == _pendingReminderActivityId);
+        return "Just a friendly reminder, $userName - ${activity.title.toLowerCase()} was scheduled for earlier. "
+            "Did you get a chance to do that? It's totally okay if not, just wanted to check in! 😊💊";
+      } catch (_) {}
+    }
+    
+    return null; // Let normal processing handle it
   }
 
   Future<void> _handleUserInput(String input) async {
@@ -219,33 +357,138 @@ class _BuddyPopupState extends State<BuddyPopup> with TickerProviderStateMixin {
     final avatar = context.read<AvatarProvider>();
     final activities = context.read<ActivityProvider>();
 
-    // Process the input with activity context
+    // Check if we're in a reminder conversation first
+    if (_isReminderConversation) {
+      final reminderResponse = await _handleReminderResponse(input, activities);
+      if (reminderResponse != null) {
+        avatar.speak(reminderResponse, mood: AvatarMood.happy);
+        return;
+      }
+    }
+
+    // Check for task-related commands
+    final taskResponse = await _processTaskCommand(input, activities);
+    
+    if (taskResponse != null) {
+      // Task command was handled
+      avatar.speak(taskResponse, mood: AvatarMood.happy);
+      return;
+    }
+
+    // Otherwise, chat with Gemini including task context
     final response = await avatar.chatWithContext(
       input,
       activities: activities.activities,
+      taskSummary: activities.getActivitiesSummary(),
     );
-
-    // Check if user wants to complete a task
-    _checkForTaskAction(input, activities);
 
     avatar.speak(response, mood: AvatarMood.happy);
   }
 
-  void _checkForTaskAction(String input, ActivityProvider activities) {
+  /// Process task-related voice/text commands
+  Future<String?> _processTaskCommand(String input, ActivityProvider activities) async {
     final lower = input.toLowerCase();
-
-    // Check for task completion phrases
-    if (lower.contains('done') ||
-        lower.contains('finished') ||
-        lower.contains('completed')) {
-      if (lower.contains('water') || lower.contains('drink')) {
-        activities.completeActivity('drink_water');
-      } else if (lower.contains('walk') || lower.contains('walked')) {
-        activities.completeActivity('take_walk');
-      } else if (lower.contains('game') || lower.contains('play')) {
-        activities.completeActivity('play_game');
+    
+    // === TASK COMPLETION PATTERNS ===
+    final completionPatterns = [
+      'done', 'finished', 'completed', 'did', 'took', 'taken', 
+      'drank', 'walked', 'played', 'i had', 'just had', 'already'
+    ];
+    
+    bool isCompletion = completionPatterns.any((p) => lower.contains(p));
+    
+    if (isCompletion) {
+      // Extract what task they completed
+      String? taskKeyword;
+      
+      if (lower.contains('water') || lower.contains('drink') || lower.contains('drank')) {
+        taskKeyword = 'water';
+      } else if (lower.contains('walk') || lower.contains('walked') || lower.contains('exercise')) {
+        taskKeyword = 'walk';
+      } else if (lower.contains('game') || lower.contains('played') || lower.contains('memory')) {
+        taskKeyword = 'game';
+      } else if (lower.contains('medicine') || lower.contains('tablet') || 
+                 lower.contains('pill') || lower.contains('medication')) {
+        taskKeyword = 'medicine';
+      }
+      
+      if (taskKeyword != null) {
+        return await activities.completeActivityByKeyword(taskKeyword);
       }
     }
+    
+    // === TASK ADDITION PATTERNS ===
+    final addPatterns = ['add', 'remind me', 'set reminder', 'put on list', 'add to list', 'add to tracker'];
+    bool isAddition = addPatterns.any((p) => lower.contains(p));
+    
+    if (isAddition) {
+      // Extract task name - text after "add", "remind me to", etc.
+      String taskTitle = input;
+      
+      for (final pattern in ['remind me to ', 'add ', 'put ', 'set reminder for ']) {
+        if (lower.contains(pattern)) {
+          final idx = lower.indexOf(pattern);
+          taskTitle = input.substring(idx + pattern.length).trim();
+          break;
+        }
+      }
+      
+      // Clean up common trailing words
+      taskTitle = taskTitle
+          .replaceAll(RegExp(r'\b(to my list|to tracker|to the list|please)\b', caseSensitive: false), '')
+          .trim();
+      
+      if (taskTitle.isNotEmpty && taskTitle.length > 2) {
+        // Check for time mentions
+        DateTime? scheduledTime;
+        final timeMatch = RegExp(r'at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?', caseSensitive: false)
+            .firstMatch(taskTitle);
+        
+        if (timeMatch != null) {
+          int hour = int.parse(timeMatch.group(1)!);
+          int minute = timeMatch.group(2) != null ? int.parse(timeMatch.group(2)!) : 0;
+          final ampm = timeMatch.group(3)?.toLowerCase();
+          
+          if (ampm == 'pm' && hour < 12) hour += 12;
+          if (ampm == 'am' && hour == 12) hour = 0;
+          
+          final now = DateTime.now();
+          scheduledTime = DateTime(now.year, now.month, now.day, hour, minute);
+          
+          // Remove time from title
+          taskTitle = taskTitle.replaceAll(timeMatch.group(0)!, '').trim();
+        }
+        
+        return await activities.addCustomActivity(
+          title: taskTitle.substring(0, 1).toUpperCase() + taskTitle.substring(1),
+          scheduledTime: scheduledTime,
+        );
+      }
+    }
+    
+    // === TASK QUERY PATTERNS ===
+    if (lower.contains('what') && (lower.contains('left') || lower.contains('pending') || 
+        lower.contains('remaining') || lower.contains('to do') || lower.contains('todo'))) {
+      final pending = activities.pendingActivities;
+      if (pending.isEmpty) {
+        return "You've completed all your tasks for today! 🎉 You're amazing!";
+      }
+      
+      final taskList = pending.map((a) => a.title).join(', ');
+      return "You still have ${pending.length} task${pending.length > 1 ? 's' : ''} left: $taskList. You've got this! 💪";
+    }
+    
+    // === REMOVAL PATTERNS ===
+    if (lower.contains('remove') || lower.contains('delete') || lower.contains('cancel')) {
+      // Extract what to remove
+      final removeMatch = RegExp(r'(?:remove|delete|cancel)\s+(.+?)(?:\s+from|\s*$)', caseSensitive: false)
+          .firstMatch(input);
+      if (removeMatch != null) {
+        return await activities.removeActivityByKeyword(removeMatch.group(1)!);
+      }
+    }
+    
+    return null; // Not a task command
   }
 
   bool _isVoiceInputActive = false;

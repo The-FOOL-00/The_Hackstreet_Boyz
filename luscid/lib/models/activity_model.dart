@@ -11,6 +11,9 @@ class ActivityModel {
   final bool isCompleted;
   final DateTime? completedAt;
   final DateTime date; // The date this activity is for
+  final DateTime? scheduledTime; // Optional scheduled time (e.g., medicine at 2 PM)
+  final bool isCustom; // User-added via voice/text
+  final int? reminderMinutes; // Minutes after scheduled time to remind
 
   const ActivityModel({
     required this.id,
@@ -20,7 +23,43 @@ class ActivityModel {
     this.isCompleted = false,
     this.completedAt,
     required this.date,
+    this.scheduledTime,
+    this.isCustom = false,
+    this.reminderMinutes,
   });
+
+  /// Check if this activity is overdue
+  bool get isOverdue {
+    if (isCompleted || scheduledTime == null) return false;
+    final now = DateTime.now();
+    final deadline = scheduledTime!.add(Duration(minutes: reminderMinutes ?? 60));
+    return now.isAfter(deadline);
+  }
+
+  /// Check if reminder should be sent
+  bool get shouldRemind {
+    if (isCompleted || scheduledTime == null) return false;
+    final now = DateTime.now();
+    return now.isAfter(scheduledTime!) && !isCompleted;
+  }
+
+  /// Get time remaining until scheduled (or overdue duration)
+  String get timeStatus {
+    if (scheduledTime == null) return '';
+    final now = DateTime.now();
+    final diff = scheduledTime!.difference(now);
+    if (diff.isNegative) {
+      final overdue = now.difference(scheduledTime!);
+      if (overdue.inHours > 0) {
+        return '${overdue.inHours}h overdue';
+      }
+      return '${overdue.inMinutes}m overdue';
+    }
+    if (diff.inHours > 0) {
+      return 'in ${diff.inHours}h';
+    }
+    return 'in ${diff.inMinutes}m';
+  }
 
   /// Creates a copy with updated fields
   ActivityModel copyWith({
@@ -31,6 +70,9 @@ class ActivityModel {
     bool? isCompleted,
     DateTime? completedAt,
     DateTime? date,
+    DateTime? scheduledTime,
+    bool? isCustom,
+    int? reminderMinutes,
   }) {
     return ActivityModel(
       id: id ?? this.id,
@@ -40,6 +82,9 @@ class ActivityModel {
       isCompleted: isCompleted ?? this.isCompleted,
       completedAt: completedAt ?? this.completedAt,
       date: date ?? this.date,
+      scheduledTime: scheduledTime ?? this.scheduledTime,
+      isCustom: isCustom ?? this.isCustom,
+      reminderMinutes: reminderMinutes ?? this.reminderMinutes,
     );
   }
 
@@ -63,6 +108,9 @@ class ActivityModel {
       'isCompleted': isCompleted,
       'completedAt': completedAt?.millisecondsSinceEpoch,
       'date': date.millisecondsSinceEpoch,
+      'scheduledTime': scheduledTime?.millisecondsSinceEpoch,
+      'isCustom': isCustom,
+      'reminderMinutes': reminderMinutes,
     };
   }
 
@@ -78,6 +126,11 @@ class ActivityModel {
           ? DateTime.fromMillisecondsSinceEpoch(json['completedAt'] as int)
           : null,
       date: DateTime.fromMillisecondsSinceEpoch(json['date'] as int),
+      scheduledTime: json['scheduledTime'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(json['scheduledTime'] as int)
+          : null,
+      isCustom: json['isCustom'] as bool? ?? false,
+      reminderMinutes: json['reminderMinutes'] as int?,
     );
   }
 
@@ -104,6 +157,10 @@ class DailyActivities {
   /// Gets the default activities for a given date
   static List<ActivityModel> getDefaultActivities(DateTime date) {
     final dateOnly = DateTime(date.year, date.month, date.day);
+    
+    // Create 2 PM scheduled time for medicine (test case)
+    final medicineTime = DateTime(date.year, date.month, date.day, 14, 0); // 2 PM
+    
     return [
       ActivityModel(
         id: 'play_game',
@@ -126,6 +183,16 @@ class DailyActivities {
         icon: '🚶',
         date: dateOnly,
       ),
+      // Medicine reminder test case - scheduled at 2 PM
+      ActivityModel(
+        id: 'take_medicine',
+        title: 'Take Afternoon Medicine',
+        description: 'Take your prescribed medication',
+        icon: '💊',
+        date: dateOnly,
+        scheduledTime: medicineTime,
+        reminderMinutes: 60, // Remind after 1 hour (3 PM)
+      ),
     ];
   }
 
@@ -133,4 +200,5 @@ class DailyActivities {
   static const String playGameId = 'play_game';
   static const String drinkWaterId = 'drink_water';
   static const String takeWalkId = 'take_walk';
+  static const String takeMedicineId = 'take_medicine';
 }

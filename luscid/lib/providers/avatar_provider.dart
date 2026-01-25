@@ -234,7 +234,10 @@ class AvatarProvider extends ChangeNotifier {
   }
 
   /// Chat with full activity context
-  Future<String> chatWithContext(String userMessage, {List<ActivityModel>? activities}) async {
+  Future<String> chatWithContext(String userMessage, {
+    List<ActivityModel>? activities,
+    String? taskSummary,
+  }) async {
     _state = AvatarState.thinking;
     notifyListeners();
 
@@ -247,7 +250,12 @@ class AvatarProvider extends ChangeNotifier {
         'title': a.title,
         'completed': a.isCompleted,
         'icon': a.icon,
+        'scheduledTime': a.scheduledTime?.toIso8601String(),
+        'isOverdue': a.isOverdue,
       }).toList();
+    }
+    if (taskSummary != null) {
+      contextMap['taskSummary'] = taskSummary;
     }
     contextMap['appContext'] = _appContext;
 

@@ -14,6 +14,23 @@ class ActivityCard extends StatelessWidget {
 
   const ActivityCard({super.key, required this.activity, this.onMarkComplete});
 
+  String _formatScheduledTime(ActivityModel activity) {
+    if (activity.scheduledTime == null) return '';
+    
+    final time = activity.scheduledTime!;
+    final hour = time.hour;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final ampm = hour >= 12 ? 'PM' : 'AM';
+    final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+    
+    if (activity.isCompleted) {
+      return 'Completed ✓';
+    } else if (activity.isOverdue) {
+      return 'Overdue (was $displayHour:$minute $ampm)';
+    }
+    return 'Scheduled: $displayHour:$minute $ampm';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -84,6 +101,39 @@ class ActivityCard extends StatelessWidget {
                           : AppColors.textSecondary,
                     ),
                   ),
+                  // Show scheduled time if available
+                  if (activity.scheduledTime != null) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(
+                          activity.isOverdue
+                              ? Icons.warning_amber_rounded
+                              : Icons.schedule_rounded,
+                          size: 14,
+                          color: activity.isCompleted
+                              ? AppColors.accentGreen
+                              : (activity.isOverdue
+                                  ? Colors.orange.shade700
+                                  : AppColors.primaryBlue),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatScheduledTime(activity),
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: activity.isCompleted
+                                ? AppColors.accentGreen
+                                : (activity.isOverdue
+                                    ? Colors.orange.shade700
+                                    : AppColors.primaryBlue),
+                            fontWeight: activity.isOverdue
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

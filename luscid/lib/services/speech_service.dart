@@ -190,12 +190,16 @@ class SpeechService extends ChangeNotifier {
 
       await _stt.listen(
         onResult: _onSpeechResult,
-        listenFor: listenFor ?? const Duration(seconds: 30),
-        pauseFor: pauseFor ?? const Duration(seconds: 3),
+        listenFor: listenFor ?? const Duration(seconds: 60),
+        pauseFor: pauseFor ?? const Duration(seconds: 5),
         partialResults: true,
         localeId: 'en_US',
-        cancelOnError: true,
-        listenMode: ListenMode.confirmation,
+        cancelOnError: false,
+        listenMode: ListenMode.dictation,
+        onSoundLevelChange: (level) {
+          // Keep session active when sound is detected
+          debugPrint('Sound level: $level');
+        },
       );
     } catch (e) {
       debugPrint('STT listen error: $e');

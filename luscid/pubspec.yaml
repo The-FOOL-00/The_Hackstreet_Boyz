@@ -46,6 +46,8 @@ dependencies:
   
   # Audio recording
   record: ^6.0.0
+  # Environment variables (dev only)
+  flutter_dotenv: ^5.2.1
 
 dev_dependencies:
   flutter_test:
@@ -60,4 +62,5 @@ flutter:
   assets:
     - assets/trivia/
     - assets/audio/
+    - .env
     - assets/images/

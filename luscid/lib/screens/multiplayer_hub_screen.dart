@@ -38,8 +38,14 @@ class MultiplayerHubScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: 40,
+          ),
           child: Column(
             children: [
               // Header
@@ -193,10 +199,8 @@ class MultiplayerHubScreen extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => TriviaGameScreen(
-                roomCode: roomCode,
-                isHost: true,
-              ),
+              builder: (_) =>
+                  TriviaGameScreen(roomCode: roomCode, isHost: true),
             ),
           );
         } else {
@@ -222,12 +226,12 @@ class MultiplayerHubScreen extends StatelessWidget {
   }
 
   /// Shows dialog to join an existing CineRecall room
-  void _showJoinCineRecallDialog(BuildContext context) {
+  void _showJoinCineRecallDialog(BuildContext parentContext) {
     final codeController = TextEditingController();
 
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
+      context: parentContext,
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         backgroundColor: Colors.white,
         title: Text(
@@ -242,7 +246,7 @@ class MultiplayerHubScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Enter the 4-digit room code',
+              'Enter the 6-character room code',
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 color: const Color(0xFF5C6B66),
@@ -251,8 +255,8 @@ class MultiplayerHubScreen extends StatelessWidget {
             const SizedBox(height: 20),
             TextField(
               controller: codeController,
-              keyboardType: TextInputType.number,
-              maxLength: 4,
+              textCapitalization: TextCapitalization.characters,
+              maxLength: 6,
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: 28,
@@ -261,7 +265,7 @@ class MultiplayerHubScreen extends StatelessWidget {
               ),
               decoration: InputDecoration(
                 counterText: '',
-                hintText: '0000',
+                hintText: 'ABC123',
                 hintStyle: GoogleFonts.poppins(
                   fontSize: 28,
                   color: Colors.grey.shade300,
@@ -275,7 +279,10 @@ class MultiplayerHubScreen extends StatelessWidget {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: Color(0xFF9B7EDE), width: 2),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF9B7EDE),
+                    width: 2,
+                  ),
                 ),
               ),
             ),
@@ -283,7 +290,7 @@ class MultiplayerHubScreen extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: Text(
               'Cancel',
               style: GoogleFonts.poppins(color: Colors.grey),
@@ -291,10 +298,10 @@ class MultiplayerHubScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              final code = codeController.text.trim();
-              if (code.length == 4) {
-                Navigator.pop(context);
-                _joinCineRecallRoom(context, code);
+              final code = codeController.text.trim().toUpperCase();
+              if (code.length == 6) {
+                Navigator.pop(dialogContext); // Close the join dialog
+                _joinCineRecallRoom(parentContext, code); // Use parent context!
               }
             },
             style: ElevatedButton.styleFrom(
@@ -315,7 +322,11 @@ class MultiplayerHubScreen extends StatelessWidget {
   }
 
   /// Joins an existing CineRecall room
-  Future<void> _joinCineRecallRoom(BuildContext context, String roomCode) async {
+  Future<void> _joinCineRecallRoom(
+    BuildContext context,
+    String roomCode,
+  ) async {
+    print('=== _joinCineRecallRoom called with code: $roomCode ===');
     final triviaProvider = Provider.of<TriviaProvider>(context, listen: false);
 
     // Generate user ID
@@ -331,20 +342,23 @@ class MultiplayerHubScreen extends StatelessWidget {
 
     try {
       final result = await triviaProvider.joinRoom(roomCode, userId);
+      print(
+        '=== joinRoom result: $result, context.mounted: ${context.mounted} ===',
+      );
 
       if (context.mounted) {
         Navigator.pop(context); // Close loading
         if (result != null) {
+          print('=== Navigating to TriviaGameScreen ===');
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => TriviaGameScreen(
-                roomCode: roomCode,
-                isHost: false,
-              ),
+              builder: (ctx) =>
+                  TriviaGameScreen(roomCode: roomCode, isHost: false),
             ),
           );
         } else {
+          print('=== Join failed: ${triviaProvider.error} ===');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(triviaProvider.error ?? 'Failed to join room'),
@@ -352,15 +366,15 @@ class MultiplayerHubScreen extends StatelessWidget {
             ),
           );
         }
+      } else {
+        print('=== Context not mounted after joinRoom! ===');
       }
     } catch (e) {
+      print('=== joinRoom exception: $e ===');
       if (context.mounted) {
         Navigator.pop(context); // Close loading
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('$e'), backgroundColor: Colors.red),
         );
       }
     }

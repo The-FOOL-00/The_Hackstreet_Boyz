@@ -76,6 +76,15 @@
       }
     },
     
+    // Trivia (CineRecall) game rooms - participants can read/write
+    "trivia_rooms": {
+      "$roomId": {
+        ".read": true,
+        ".write": true,
+        ".validate": "newData.hasChildren(['roomCode', 'hostId', 'status'])"
+      }
+    },
+    
     // Invites - sender/receiver can read/write their invites
     "invites": {
       "outgoing": {

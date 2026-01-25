@@ -72,7 +72,12 @@ class TriviaProvider extends ChangeNotifier {
       imageAsset: 'assets/trivia/puzzle_kaathu.jpeg',
       audioAsset: 'assets/audio/two_two_two.mpeg',
       answer: 'Kaathuvaakula Rendu Kaadhal',
-      options: ['Kaathuvaakula Rendu Kaadhal', 'Naanum Rowdy Dhaan', '96', 'Super Deluxe'],
+      options: [
+        'Kaathuvaakula Rendu Kaadhal',
+        'Naanum Rowdy Dhaan',
+        '96',
+        'Super Deluxe',
+      ],
       hint: 'Rendu laddu thinna aasaiya?',
       hintType: HintType.audio,
     ),
@@ -84,7 +89,12 @@ class TriviaProvider extends ChangeNotifier {
       imageAsset: 'assets/trivia/puzzle_keladi.jpeg',
       audioAsset: 'assets/audio/manil intha kadhal.mpeg',
       answer: 'Keladi Kanmani',
-      options: ['Keladi Kanmani', 'Pudhu Pudhu Arthangal', 'Mouna Ragam', 'Sindhu Bhairavi'],
+      options: [
+        'Keladi Kanmani',
+        'Pudhu Pudhu Arthangal',
+        'Mouna Ragam',
+        'Sindhu Bhairavi',
+      ],
       hint: 'Mannil Indha Kaadhal... - The legendary breathless song by SPB!',
       hintType: HintType.audio,
     ),
@@ -120,7 +130,12 @@ class TriviaProvider extends ChangeNotifier {
       imageAsset: 'assets/trivia/puzzle_mainepyaar.jpeg',
       audioAsset: 'assets/audio/chill.mpeg',
       answer: 'Maine Pyaar Kyun Kiya',
-      options: ['Maine Pyaar Kyun Kiya', 'Partner', 'No Entry', 'Mujhse Shaadi Karogi'],
+      options: [
+        'Maine Pyaar Kyun Kiya',
+        'Partner',
+        'No Entry',
+        'Mujhse Shaadi Karogi',
+      ],
       hint: 'Just Chill, Chill, Just Chill!',
       hintType: HintType.audio,
     ),
@@ -172,15 +187,20 @@ class TriviaProvider extends ChangeNotifier {
     _clearError();
 
     try {
-      // Generate unique room code
-      String roomCode;
-      bool codeExists = true;
+      // Generate unique room code (try up to 5 times)
+      String roomCode = _generateRoomCode();
 
-      do {
-        roomCode = _generateRoomCode();
-        final snapshot = await _roomRef(roomCode).get();
-        codeExists = snapshot.exists;
-      } while (codeExists);
+      for (int i = 0; i < 5; i++) {
+        try {
+          final snapshot = await _roomRef(roomCode).get();
+          if (!snapshot.exists) break; // Room code is available
+          roomCode = _generateRoomCode(); // Try another code
+        } catch (e) {
+          debugPrint('[TriviaProvider] Error checking room existence: $e');
+          // If we can't check, assume the room doesn't exist and proceed
+          break;
+        }
+      }
 
       // Create room with sample puzzles
       final room = TriviaRoom.create(
@@ -189,8 +209,13 @@ class TriviaProvider extends ChangeNotifier {
         puzzles: samplePuzzles,
       );
 
-      // Save to Firebase
-      await _roomRef(roomCode).set(room.toJson());
+      // Get the Map data - same approach as Memory Game
+      final roomJson = room.toJson();
+      debugPrint('[TriviaProvider] Creating Room: $roomCode');
+      debugPrint('[TriviaProvider] Room JSON keys: ${roomJson.keys}');
+
+      // Save to Firebase (exactly like Memory Game does it)
+      await _roomRef(roomCode).set(roomJson);
 
       // Set current user and listen to room
       _currentUserId = hostId;
@@ -198,7 +223,9 @@ class TriviaProvider extends ChangeNotifier {
 
       _setLoading(false);
       return roomCode;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[TriviaProvider] createRoom error: $e');
+      debugPrint('[TriviaProvider] Stack trace: $stackTrace');
       _setError('Failed to create room: $e');
       _setLoading(false);
       return null;
@@ -218,8 +245,9 @@ class TriviaProvider extends ChangeNotifier {
         throw Exception('Room not found. Please check the code.');
       }
 
+      // Use Map<dynamic, dynamic> to match fromJson signature
       final room = TriviaRoom.fromJson(
-        Map<String, dynamic>.from(snapshot.value as Map),
+        Map<dynamic, dynamic>.from(snapshot.value as Map),
       );
 
       if (room.isRoomFull) {
@@ -230,21 +258,46 @@ class TriviaProvider extends ChangeNotifier {
         throw Exception('You cannot join your own room.');
       }
 
-      // Update room with guest
+      // Update room with guest (keep status as waiting - host will start)
       final updatedScores = Map<String, int>.from(room.scores);
       updatedScores[guestId] = 0;
 
       await _roomRef(roomCode).update({
         'guestId': guestId,
         'scores': updatedScores,
-        'status': TriviaStatus.discussing.name,
+        // Don't change status here - host will start the game
       });
 
-      // Set current user and listen to room
+      // Set current user
       _currentUserId = guestId;
+
+      // Set room immediately so UI doesn't show loading
+      // (The listener will keep it in sync after this)
+      _room = TriviaRoom(
+        roomCode: room.roomCode,
+        hostId: room.hostId,
+        guestId: guestId,
+        currentQuestionIndex: room.currentQuestionIndex,
+        scores: updatedScores,
+        status: room.status, // Still 'waiting'
+        puzzles: room.puzzles,
+        showOptions: room.showOptions,
+        selectedAnswer: room.selectedAnswer,
+        selectedBy: room.selectedBy,
+        createdAt: room.createdAt,
+      );
+
+      // Notify listeners immediately so UI updates
+      notifyListeners();
+
+      debugPrint(
+        '[TriviaProvider] Guest joined - room set: ${_room?.roomCode}, status: ${_room?.status}',
+      );
+
+      // Start listening for updates
       _listenToRoom(roomCode);
 
-      _setLoading(false);
+      _isLoading = false;
       return roomCode;
     } catch (e) {
       _setError('Failed to join room: $e');
@@ -525,12 +578,35 @@ class TriviaProvider extends ChangeNotifier {
   /// Listens to room updates from Firebase
   void _listenToRoom(String roomCode) {
     _roomSubscription?.cancel();
+    debugPrint('[TriviaProvider] Starting listener for room: $roomCode');
 
     _roomSubscription = _roomRef(roomCode).onValue.listen(
       (event) {
-        if (event.snapshot.exists) {
-          _room = TriviaRoom.fromJson(
-            Map<String, dynamic>.from(event.snapshot.value as Map),
+        debugPrint(
+          '[TriviaProvider] Received Firebase event, exists: ${event.snapshot.exists}',
+        );
+        if (!event.snapshot.exists) return;
+
+        // Safety check: ensure snapshot.value is a Map
+        final value = event.snapshot.value;
+        if (value == null) {
+          debugPrint('[TriviaProvider] Warning: snapshot.value is null');
+          return;
+        }
+
+        if (value is! Map) {
+          debugPrint(
+            '[TriviaProvider] Warning: snapshot.value is not a Map, got ${value.runtimeType}',
+          );
+          return;
+        }
+
+        try {
+          // Convert to Map<dynamic, dynamic> for fromJson (same as Memory Game pattern)
+          final mapData = Map<dynamic, dynamic>.from(value);
+          _room = TriviaRoom.fromJson(mapData);
+          debugPrint(
+            '[TriviaProvider] Room updated - status: ${_room?.status}, guestId: ${_room?.guestId}',
           );
 
           // Update feedback if another player answered
@@ -545,6 +621,10 @@ class TriviaProvider extends ChangeNotifier {
           }
 
           notifyListeners();
+        } catch (e, stackTrace) {
+          debugPrint('[TriviaProvider] Error parsing room: $e');
+          debugPrint('[TriviaProvider] Stack trace: $stackTrace');
+          _setError('Failed to parse room data: $e');
         }
       },
       onError: (error) {

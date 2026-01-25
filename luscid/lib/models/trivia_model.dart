@@ -1,12 +1,22 @@
 /// Trivia model for CineRecall movie puzzle game
-///
-/// Manages movie puzzle data for the multiplayer trivia experience.
 library;
 
-/// Type of hint provided for a movie puzzle
-enum HintType { lyric, dialogue, audio }
+// ==================== ENUMS (Critical!) ====================
 
-/// Represents a movie puzzle with rebus-style images
+/// Type of hint provided for a movie puzzle
+enum HintType { lyric, dialogue, audio, text }
+
+/// Status of the trivia game
+enum TriviaStatus {
+  waiting,    // Waiting for players
+  discussing, // Players are discussing the puzzle
+  answering,  // Options are shown, waiting for selection
+  revealed,   // Answer has been revealed
+  finished,   // Game is complete
+}
+
+// ==================== PUZZLE CLASS ====================
+
 class MoviePuzzle {
   final String id;
   final String category;
@@ -30,7 +40,45 @@ class MoviePuzzle {
     this.isRevealed = false,
   });
 
-  /// Creates a copy with updated fields
+  /// Serializes to JSON for Firebase
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'category': category,
+      'imageAsset': imageAsset,
+      'answer': answer,
+      'options': options,
+      'hint': hint,
+      'hintType': hintType.name,
+      'audioAsset': audioAsset,
+      'isRevealed': isRevealed,
+    };
+  }
+
+  /// Alias for toJson (Strict Map return)
+  Map<String, dynamic> toMap() => toJson();
+
+  /// Deserializes from JSON
+  factory MoviePuzzle.fromJson(Map<dynamic, dynamic> json) {
+    return MoviePuzzle(
+      id: json['id']?.toString() ?? '',
+      category: json['category']?.toString() ?? '',
+      imageAsset: json['imageAsset']?.toString() ?? '',
+      answer: json['answer']?.toString() ?? '',
+      options: (json['options'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      hint: json['hint']?.toString() ?? '',
+      hintType: HintType.values.firstWhere(
+        (e) => e.name == json['hintType'],
+        orElse: () => HintType.dialogue,
+      ),
+      audioAsset: json['audioAsset']?.toString(),
+      isRevealed: json['isRevealed'] == true,
+    );
+  }
+  
   MoviePuzzle copyWith({
     String? id,
     String? category,
@@ -54,63 +102,17 @@ class MoviePuzzle {
       isRevealed: isRevealed ?? this.isRevealed,
     );
   }
-
-  /// Serializes to JSON for Firebase
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'category': category,
-      'imageAsset': imageAsset,
-      'answer': answer,
-      'options': options,
-      'hint': hint,
-      'hintType': hintType.name,
-      'audioAsset': audioAsset,
-      'isRevealed': isRevealed,
-    };
-  }
-
-  /// Deserializes from JSON
-  factory MoviePuzzle.fromJson(Map<String, dynamic> json) {
-    return MoviePuzzle(
-      id: json['id'] as String,
-      category: json['category'] as String,
-      imageAsset: json['imageAsset'] as String,
-      answer: json['answer'] as String,
-      options: List<String>.from(json['options'] as List),
-      hint: json['hint'] as String,
-      hintType: HintType.values.firstWhere(
-        (e) => e.name == json['hintType'],
-        orElse: () => HintType.dialogue,
-      ),
-      audioAsset: json['audioAsset'] as String?,
-      isRevealed: json['isRevealed'] as bool? ?? false,
-    );
-  }
-
-  @override
-  String toString() {
-    return 'MoviePuzzle(id: $id, category: $category, answer: $answer)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is MoviePuzzle && other.id == id;
-  }
-
-  @override
-  int get hashCode => id.hashCode;
 }
 
-/// Trivia game room state for multiplayer synchronization
+// ==================== ROOM CLASS ====================
+
 class TriviaRoom {
   final String roomCode;
   final String hostId;
   final String? guestId;
   final int currentQuestionIndex;
   final Map<String, int> scores;
-  final TriviaStatus status;
+  final TriviaStatus status; // Uses the Enum defined above
   final bool showOptions;
   final String? selectedAnswer;
   final String? selectedBy;
@@ -118,13 +120,13 @@ class TriviaRoom {
   final DateTime createdAt;
   final DateTime? finishedAt;
 
-  const TriviaRoom({
+  TriviaRoom({
     required this.roomCode,
     required this.hostId,
     this.guestId,
     this.currentQuestionIndex = 0,
     required this.scores,
-    this.status = TriviaStatus.waiting,
+    required this.status,
     this.showOptions = false,
     this.selectedAnswer,
     this.selectedBy,
@@ -133,24 +135,79 @@ class TriviaRoom {
     this.finishedAt,
   });
 
-  /// Check if both players are in the room
   bool get isRoomFull => guestId != null;
-
-  /// Check if the game is finished
   bool get isFinished => status == TriviaStatus.finished;
 
-  /// Get current puzzle
   MoviePuzzle? get currentPuzzle {
     if (currentQuestionIndex < puzzles.length) {
       return puzzles[currentQuestionIndex];
     }
     return null;
   }
-
-  /// Check if there are more puzzles
+  
   bool get hasMorePuzzles => currentQuestionIndex < puzzles.length - 1;
 
-  /// Creates a copy with updated fields
+  /// Serializes to JSON for Firebase (Strict Map)
+  Map<String, dynamic> toJson() {
+    return {
+      'roomCode': roomCode,
+      'hostId': hostId,
+      'guestId': guestId,
+      'currentQuestionIndex': currentQuestionIndex,
+      'scores': scores,
+      'status': status.name, // Saves enum as string (e.g., "waiting")
+      'showOptions': showOptions,
+      'selectedAnswer': selectedAnswer,
+      'selectedBy': selectedBy,
+      'puzzles': puzzles.map((p) => p.toJson()).toList(),
+      'createdAt': createdAt.millisecondsSinceEpoch,
+      'finishedAt': finishedAt?.millisecondsSinceEpoch,
+    };
+  }
+
+  Map<String, dynamic> toMap() => toJson();
+
+  /// Deserializes from JSON
+  factory TriviaRoom.fromJson(Map<dynamic, dynamic> json) {
+    // Parse puzzles safely (Handles both List and Map formats from Firebase)
+    List<MoviePuzzle> parsedPuzzles = [];
+    final puzzlesData = json['puzzles'];
+    
+    if (puzzlesData is List) {
+      parsedPuzzles = puzzlesData
+          .map((p) => MoviePuzzle.fromJson(Map<dynamic, dynamic>.from(p)))
+          .toList();
+    } else if (puzzlesData is Map) {
+      parsedPuzzles = puzzlesData.values
+          .map((p) => MoviePuzzle.fromJson(Map<dynamic, dynamic>.from(p)))
+          .toList();
+    }
+
+    return TriviaRoom(
+      roomCode: json['roomCode']?.toString() ?? '',
+      hostId: json['hostId']?.toString() ?? '',
+      guestId: json['guestId']?.toString(),
+      currentQuestionIndex: (json['currentQuestionIndex'] as num?)?.toInt() ?? 0,
+      scores: Map<String, int>.from(json['scores'] ?? {}),
+      
+      // CRITICAL: Parses String back to TriviaStatus Enum
+      status: TriviaStatus.values.firstWhere(
+        (e) => e.name == json['status'],
+        orElse: () => TriviaStatus.waiting,
+      ),
+      
+      showOptions: json['showOptions'] == true,
+      selectedAnswer: json['selectedAnswer']?.toString(),
+      selectedBy: json['selectedBy']?.toString(),
+      puzzles: parsedPuzzles,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(
+          (json['createdAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch),
+      finishedAt: json['finishedAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch((json['finishedAt'] as num).toInt())
+          : null,
+    );
+  }
+  
   TriviaRoom copyWith({
     String? roomCode,
     String? hostId,
@@ -173,64 +230,14 @@ class TriviaRoom {
       scores: scores ?? Map.from(this.scores),
       status: status ?? this.status,
       showOptions: showOptions ?? this.showOptions,
-      selectedAnswer: selectedAnswer,
-      selectedBy: selectedBy,
+      selectedAnswer: selectedAnswer ?? this.selectedAnswer,
+      selectedBy: selectedBy ?? this.selectedBy,
       puzzles: puzzles ?? this.puzzles,
       createdAt: createdAt ?? this.createdAt,
       finishedAt: finishedAt ?? this.finishedAt,
     );
   }
-
-  /// Serializes to JSON for Firebase
-  Map<String, dynamic> toJson() {
-    return {
-      'roomCode': roomCode,
-      'hostId': hostId,
-      'guestId': guestId,
-      'currentQuestionIndex': currentQuestionIndex,
-      'scores': scores,
-      'status': status.name,
-      'showOptions': showOptions,
-      'selectedAnswer': selectedAnswer,
-      'selectedBy': selectedBy,
-      'puzzles': puzzles.map((p) => p.toJson()).toList(),
-      'createdAt': createdAt.millisecondsSinceEpoch,
-      'finishedAt': finishedAt?.millisecondsSinceEpoch,
-    };
-  }
-
-  /// Deserializes from JSON
-  factory TriviaRoom.fromJson(Map<String, dynamic> json) {
-    return TriviaRoom(
-      roomCode: json['roomCode'] as String,
-      hostId: json['hostId'] as String,
-      guestId: json['guestId'] as String?,
-      currentQuestionIndex: json['currentQuestionIndex'] as int? ?? 0,
-      scores: Map<String, int>.from(json['scores'] as Map? ?? {}),
-      status: TriviaStatus.values.firstWhere(
-        (e) => e.name == json['status'],
-        orElse: () => TriviaStatus.waiting,
-      ),
-      showOptions: json['showOptions'] as bool? ?? false,
-      selectedAnswer: json['selectedAnswer'] as String?,
-      selectedBy: json['selectedBy'] as String?,
-      puzzles:
-          (json['puzzles'] as List?)
-              ?.map(
-                (p) =>
-                    MoviePuzzle.fromJson(Map<String, dynamic>.from(p as Map)),
-              )
-              .toList() ??
-          [],
-      createdAt: DateTime.fromMillisecondsSinceEpoch(
-        json['createdAt'] as int? ?? DateTime.now().millisecondsSinceEpoch,
-      ),
-      finishedAt: json['finishedAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(json['finishedAt'] as int)
-          : null,
-    );
-  }
-
+  
   /// Creates a new room
   factory TriviaRoom.create({
     required String roomCode,
@@ -242,16 +249,8 @@ class TriviaRoom {
       hostId: hostId,
       scores: {hostId: 0},
       puzzles: puzzles,
+      status: TriviaStatus.waiting,
       createdAt: DateTime.now(),
     );
   }
-}
-
-/// Status of the trivia game
-enum TriviaStatus {
-  waiting, // Waiting for players
-  discussing, // Players are discussing the puzzle
-  answering, // Options are shown, waiting for selection
-  revealed, // Answer has been revealed
-  finished, // Game is complete
 }

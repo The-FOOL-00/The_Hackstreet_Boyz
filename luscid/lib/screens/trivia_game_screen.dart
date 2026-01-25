@@ -10,6 +10,8 @@ import '../core/constants/colors.dart';
 import '../core/constants/text_styles.dart';
 import '../models/trivia_model.dart';
 import '../providers/trivia_provider.dart';
+import '../providers/auth_provider.dart';
+import '../voice_chat/voice_chat_service.dart';
 
 class TriviaGameScreen extends StatefulWidget {
   final String roomCode;
@@ -30,18 +32,70 @@ class TriviaGameScreen extends StatefulWidget {
 class _TriviaGameScreenState extends State<TriviaGameScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
+  VoiceChatService? _voiceChat;
 
   @override
   void initState() {
     super.initState();
+    print(
+      '=== TRIVIA GAME SCREEN INIT === roomCode: ${widget.roomCode}, isHost: ${widget.isHost}',
+    );
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
+
+    // Initialize voice chat for multiplayer
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !widget.isSolo) {
+        _initVoiceChat();
+      }
+      // Also print provider state
+      final provider = context.read<TriviaProvider>();
+      print(
+        '=== POST FRAME: Provider room: ${provider.room?.roomCode}, status: ${provider.room?.status}',
+      );
+    });
+  }
+
+  void _initVoiceChat() {
+    final authProvider = context.read<AuthProvider>();
+    final triviaProvider = context.read<TriviaProvider>();
+
+    // Use trivia provider's current user ID (set during room create/join)
+    // Fall back to auth provider's user ID if available
+    final currentUserId = triviaProvider.currentUserId ?? authProvider.userId;
+    final userName = authProvider.user?.displayName ?? 'Player';
+
+    print(
+      '=== Initializing voice chat: roomId=trivia_${widget.roomCode}, userId=$currentUserId ===',
+    );
+
+    if (currentUserId != null && widget.roomCode.isNotEmpty) {
+      _voiceChat = VoiceChatService(
+        roomId: 'trivia_${widget.roomCode}',
+        userId: currentUserId,
+        userName: userName,
+      );
+      _voiceChat!.joinRoom();
+      _voiceChat!.addListener(_onVoiceChatChanged);
+      print('=== Voice chat initialized and joined ===');
+    } else {
+      print(
+        '=== Voice chat NOT initialized: userId=$currentUserId, roomCode=${widget.roomCode} ===',
+      );
+    }
+  }
+
+  void _onVoiceChatChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    _voiceChat?.removeListener(_onVoiceChatChanged);
+    _voiceChat?.leaveRoom();
+    _voiceChat?.dispose();
     _pulseController.dispose();
     super.dispose();
   }
@@ -53,8 +107,13 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
         final room = provider.room;
         final puzzle = provider.currentPuzzle;
 
+        debugPrint(
+          '[TriviaGameScreen] Building - room: ${room?.roomCode}, status: ${room?.status}, isHost: ${widget.isHost}',
+        );
+
         // Loading state
         if (room == null) {
+          debugPrint('[TriviaGameScreen] Room is NULL - showing loading');
           return Scaffold(
             backgroundColor: AppColors.backgroundBeige,
             appBar: _buildAppBar(context, null),
@@ -77,12 +136,12 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
           );
         }
 
-        // Waiting for other player (skip in solo mode)
-        if (!room.isRoomFull && !widget.isSolo) {
+        // Waiting for other player OR waiting for host to start (skip in solo mode)
+        if (room.status == TriviaStatus.waiting && !widget.isSolo) {
           return Scaffold(
             backgroundColor: AppColors.backgroundBeige,
             appBar: _buildAppBar(context, null),
-            body: _buildWaitingScreen(room),
+            body: _buildWaitingScreen(room, provider),
           );
         }
 
@@ -99,30 +158,74 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
         return Scaffold(
           backgroundColor: AppColors.backgroundBeige,
           appBar: _buildAppBar(context, puzzle),
-          body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  // Progress indicator
-                  _buildProgressBar(provider),
-                  const SizedBox(height: 24),
+          body: Stack(
+            children: [
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      // Progress indicator
+                      _buildProgressBar(provider),
+                      const SizedBox(height: 24),
 
-                  // Puzzle area
-                  Expanded(
-                    child: puzzle != null
-                        ? _buildPuzzleArea(context, provider, puzzle)
-                        : const Center(child: Text('No puzzle available')),
+                      // Puzzle area
+                      Expanded(
+                        child: puzzle != null
+                            ? _buildPuzzleArea(context, provider, puzzle)
+                            : const Center(child: Text('No puzzle available')),
+                      ),
+
+                      // Interaction area
+                      _buildInteractionArea(context, provider, puzzle),
+                    ],
                   ),
-
-                  // Interaction area
-                  _buildInteractionArea(context, provider, puzzle),
-                ],
+                ),
               ),
-            ),
+              // Floating voice chat button (multiplayer only)
+              if (!widget.isSolo)
+                Positioned(
+                  right: 16,
+                  bottom: 24,
+                  child: _buildVoiceChatButton(),
+                ),
+            ],
           ),
         );
       },
+    );
+  }
+
+  /// Voice chat floating button for multiplayer
+  Widget _buildVoiceChatButton() {
+    final isConnected = _voiceChat?.isConnected ?? false;
+    final isMuted = _voiceChat?.isMuted ?? true;
+
+    return SizedBox(
+      width: 72,
+      height: 72,
+      child: ElevatedButton(
+        onPressed: isConnected ? () => _voiceChat?.toggleMute() : null,
+        style: ElevatedButton.styleFrom(
+          shape: const CircleBorder(),
+          backgroundColor: !isConnected
+              ? AppColors.backgroundWhite
+              : isMuted
+              ? const Color(0xFFFFEBEE)
+              : const Color(0xFFE8F5E9),
+          elevation: 8,
+          padding: EdgeInsets.zero,
+        ),
+        child: Icon(
+          isMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
+          size: 36,
+          color: !isConnected
+              ? AppColors.textSecondary
+              : isMuted
+              ? const Color(0xFFE53935)
+              : const Color(0xFF4CAF50),
+        ),
+      ),
     );
   }
 
@@ -142,7 +245,10 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
     );
   }
 
-  Widget _buildWaitingScreen(TriviaRoom room) {
+  Widget _buildWaitingScreen(TriviaRoom room, TriviaProvider provider) {
+    final isHost = widget.isHost;
+    final isRoomFull = room.isRoomFull;
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -185,36 +291,93 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
             ),
             const SizedBox(height: 40),
 
-            // Waiting animation
-            AnimatedBuilder(
-              animation: _pulseController,
-              builder: (context, child) {
-                return Opacity(
-                  opacity: 0.5 + (_pulseController.value * 0.5),
-                  child: child,
-                );
-              },
-              child: const Icon(
-                Icons.people_rounded,
+            // Status indicator
+            if (isRoomFull) ...[
+              // Both players are in - show ready state
+              const Icon(
+                Icons.check_circle_rounded,
                 size: 80,
-                color: AppColors.primaryBlue,
+                color: AppColors.accentGreen,
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
+              Text(
+                'Partner Joined! 🎉',
+                style: AppTextStyles.heading3,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                isHost
+                    ? 'Press Start Game to begin!'
+                    : 'Waiting for host to start the game...',
+                style: AppTextStyles.bodyLarge.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
 
-            Text(
-              'Waiting for your partner...',
-              style: AppTextStyles.heading3,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Share the room code with your friend',
-              style: AppTextStyles.bodyLarge.copyWith(
-                color: AppColors.textSecondary,
+              // Start Game button (only for host)
+              if (isHost)
+                ElevatedButton.icon(
+                  onPressed: () => provider.startGame(),
+                  icon: const Icon(Icons.play_arrow_rounded, size: 32),
+                  label: const Text('Start Game'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 72),
+                    backgroundColor: AppColors.accentGreen,
+                    foregroundColor: Colors.white,
+                    textStyle: AppTextStyles.buttonLarge,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                )
+              else
+                // Guest waiting indicator
+                AnimatedBuilder(
+                  animation: _pulseController,
+                  builder: (context, child) {
+                    return Opacity(
+                      opacity: 0.5 + (_pulseController.value * 0.5),
+                      child: child,
+                    );
+                  },
+                  child: const CircularProgressIndicator(
+                    color: AppColors.primaryBlue,
+                  ),
+                ),
+            ] else ...[
+              // Waiting for partner
+              AnimatedBuilder(
+                animation: _pulseController,
+                builder: (context, child) {
+                  return Opacity(
+                    opacity: 0.5 + (_pulseController.value * 0.5),
+                    child: child,
+                  );
+                },
+                child: const Icon(
+                  Icons.people_rounded,
+                  size: 80,
+                  color: AppColors.primaryBlue,
+                ),
               ),
-              textAlign: TextAlign.center,
-            ),
+              const SizedBox(height: 24),
+              Text(
+                'Waiting for your partner...',
+                style: AppTextStyles.heading3,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Share the room code with your friend',
+                style: AppTextStyles.bodyLarge.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
             const SizedBox(height: 40),
           ],
         ),
@@ -631,10 +794,6 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
   ) {
     return Column(
       children: [
-        // Voice chat area - modular for easy ZegoCloud/Agora integration
-        _buildVoiceChatArea(),
-        const SizedBox(height: 16),
-
         // Hint button - audio hint only
         if (puzzle != null && !puzzle.isRevealed) ...[
           // Audio hint button (if puzzle has audio)
@@ -652,11 +811,13 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
               ),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 64),
-                foregroundColor:
-                    provider.isPlayingAudio ? AppColors.error : AppColors.primaryBlue,
+                foregroundColor: provider.isPlayingAudio
+                    ? AppColors.error
+                    : AppColors.primaryBlue,
                 side: BorderSide(
-                  color:
-                      provider.isPlayingAudio ? AppColors.error : AppColors.primaryBlue,
+                  color: provider.isPlayingAudio
+                      ? AppColors.error
+                      : AppColors.primaryBlue,
                   width: 2,
                 ),
                 textStyle: AppTextStyles.buttonLarge,
@@ -693,67 +854,6 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
           ),
         ),
       ],
-    );
-  }
-
-  /// Voice chat placeholder widget
-  /// TODO: Replace with ZegoCloud/Agora widget
-  /// This method is isolated for easy integration swap
-  Widget _buildVoiceChatArea() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundWhite,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.accentGreen.withOpacity(0.3),
-          width: 2,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          AnimatedBuilder(
-            animation: _pulseController,
-            builder: (context, child) {
-              return Transform.scale(
-                scale: 1.0 + (_pulseController.value * 0.1),
-                child: child,
-              );
-            },
-            child: Icon(
-              Icons.mic_rounded,
-              size: 48,
-              color: AppColors.accentGreen.withOpacity(0.8),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.isSolo
-                      ? 'Think carefully...'
-                      : 'Discuss with your partner!',
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  widget.isSolo
-                      ? 'Take your time to recall.'
-                      : 'Voice chat coming soon...',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textLight,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 

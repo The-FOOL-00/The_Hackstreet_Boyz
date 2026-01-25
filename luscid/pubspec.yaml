@@ -35,6 +35,7 @@ dependencies:
   
   # WebRTC for P2P Audio
   flutter_webrtc: ^0.12.12
+  audioplayers: ^6.5.1
 
 dev_dependencies:
   flutter_test:

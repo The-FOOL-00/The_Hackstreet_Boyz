@@ -10,6 +10,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_tts
   flutter_webrtc
   permission_handler_windows
+  record_windows
   speech_to_text_windows
 )
 

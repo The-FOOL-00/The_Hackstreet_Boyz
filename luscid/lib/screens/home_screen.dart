@@ -329,6 +329,23 @@ class _HomeScreenState extends State<HomeScreen> {
                             },
                           ),
                           const SizedBox(height: 14),
+                          // CineRecall (Movie Trivia) Game
+                          LargeButton(
+                            text: 'CineRecall',
+                            subtitle: 'Movie trivia fun',
+                            emoji: '🎬',
+                            isPrimary: true,
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const GameModeScreen(
+                                    gameType: GameType.trivia,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 14),
                           // Play with Friends (Buddy Circle)
                           LargeButton(
                             text: 'Play With Friends',

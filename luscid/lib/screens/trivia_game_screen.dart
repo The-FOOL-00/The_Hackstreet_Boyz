@@ -115,23 +115,37 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
         if (room == null) {
           debugPrint('[TriviaGameScreen] Room is NULL - showing loading');
           return Scaffold(
-            backgroundColor: AppColors.backgroundBeige,
-            appBar: _buildAppBar(context, null),
-            body: const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(color: AppColors.primaryBlue),
-                  SizedBox(height: 24),
-                  Text(
-                    'Loading game...',
-                    style: TextStyle(
-                      fontSize: 24,
-                      color: AppColors.textPrimary,
-                    ),
+            backgroundColor: AppColors.backgroundLight,
+            body: Stack(
+              children: [
+                // Decorative blur circle
+                _buildDecorativeCircle(),
+                SafeArea(
+                  child: Column(
+                    children: [
+                      _buildCustomHeader(context),
+                      const Expanded(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CircularProgressIndicator(color: AppColors.primaryBlue),
+                              SizedBox(height: 24),
+                              Text(
+                                'Loading game...',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           );
         }
@@ -139,60 +153,230 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
         // Waiting for other player OR waiting for host to start (skip in solo mode)
         if (room.status == TriviaStatus.waiting && !widget.isSolo) {
           return Scaffold(
-            backgroundColor: AppColors.backgroundBeige,
-            appBar: _buildAppBar(context, null),
-            body: _buildWaitingScreen(room, provider),
+            backgroundColor: AppColors.backgroundLight,
+            body: Stack(
+              children: [
+                _buildDecorativeCircle(),
+                SafeArea(
+                  child: Column(
+                    children: [
+                      _buildCustomHeader(context),
+                      Expanded(child: _buildWaitingScreen(room, provider)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           );
         }
 
         // Game finished
         if (provider.isFinished) {
           return Scaffold(
-            backgroundColor: AppColors.backgroundBeige,
-            appBar: _buildAppBar(context, puzzle),
-            body: _buildFinishedScreen(provider),
+            backgroundColor: AppColors.backgroundLight,
+            body: Stack(
+              children: [
+                _buildDecorativeCircle(),
+                SafeArea(
+                  child: Column(
+                    children: [
+                      _buildCustomHeader(context),
+                      Expanded(child: _buildFinishedScreen(provider)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           );
         }
 
         // Active game
         return Scaffold(
-          backgroundColor: AppColors.backgroundBeige,
-          appBar: _buildAppBar(context, puzzle),
+          backgroundColor: AppColors.backgroundLight,
           body: Stack(
             children: [
+              // Decorative blur circle
+              _buildDecorativeCircle(),
               SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      // Progress indicator
-                      _buildProgressBar(provider),
-                      const SizedBox(height: 24),
-
-                      // Puzzle area
-                      Expanded(
+                child: Column(
+                  children: [
+                    // Custom header (replaces AppBar)
+                    _buildCustomHeader(context),
+                    // Stats bar
+                    _buildStatsBar(provider),
+                    const SizedBox(height: 16),
+                    // Puzzle area
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: puzzle != null
                             ? _buildPuzzleArea(context, provider, puzzle)
                             : const Center(child: Text('No puzzle available')),
                       ),
-
-                      // Interaction area
-                      _buildInteractionArea(context, provider, puzzle),
-                    ],
-                  ),
+                    ),
+                    // Interaction area
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _buildInteractionArea(context, provider, puzzle),
+                    ),
+                    const SizedBox(height: 100), // Space for mic button
+                  ],
                 ),
               ),
-              // Floating voice chat button (multiplayer only)
+              // Floating voice chat button centered at bottom (multiplayer only)
               if (!widget.isSolo)
                 Positioned(
-                  right: 16,
+                  left: 0,
+                  right: 0,
                   bottom: 24,
-                  child: _buildVoiceChatButton(),
+                  child: Center(child: _buildVoiceChatButton()),
                 ),
             ],
           ),
         );
       },
+    );
+  }
+
+  /// Decorative blur circle at top-right (Stitch design pattern)
+  Widget _buildDecorativeCircle() {
+    return Positioned(
+      top: -80,
+      right: -60,
+      child: Container(
+        width: 180,
+        height: 180,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColors.primaryBlue.withOpacity(0.08),
+        ),
+      ),
+    );
+  }
+
+  /// Custom header matching Memory Game style
+  Widget _buildCustomHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          // Close button
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.backgroundWhite,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.borderBlue),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.shadowSoft,
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.close_rounded),
+              color: AppColors.textPrimary,
+              onPressed: () => _showExitConfirmation(context),
+            ),
+          ),
+          const Spacer(),
+          // Title with pill
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.primarySoft,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('🎬', style: TextStyle(fontSize: 18)),
+                const SizedBox(width: 8),
+                Text(
+                  'CineRecall',
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: AppColors.primaryBlue,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          // Placeholder for symmetry
+          const SizedBox(width: 48),
+        ],
+      ),
+    );
+  }
+
+  /// Stats bar showing question progress and scores (Stitch design pattern)
+  Widget _buildStatsBar(TriviaProvider provider) {
+    final current = provider.currentQuestionIndex + 1;
+    final total = provider.totalQuestions;
+    final scores = provider.scores;
+    final myScore = scores[provider.currentUserId] ?? 0;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.backgroundWhite,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.borderBlue),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadowSoft,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildStatItem('🎬', 'Question', '$current/$total'),
+            _buildDivider(),
+            _buildStatItem('⭐', 'Score', '$myScore'),
+            _buildDivider(),
+            _buildStatItem('🎯', 'Total', '$total'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String emoji, String label, String value) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 20)),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: AppTextStyles.labelSmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        Text(
+          value,
+          style: AppTextStyles.heading4.copyWith(
+            color: AppColors.primaryBlue,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDivider() {
+    return Container(
+      width: 1,
+      height: 40,
+      color: AppColors.borderBlue,
     );
   }
 
@@ -229,56 +413,49 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context, MoviePuzzle? puzzle) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.close_rounded, size: 32),
-        onPressed: () => _showExitConfirmation(context),
-      ),
-      title: Text(
-        puzzle != null ? 'Guess the ${puzzle.category} Movie' : 'CineRecall 🎬',
-        style: AppTextStyles.heading3,
-      ),
-      centerTitle: true,
-    );
-  }
-
   Widget _buildWaitingScreen(TriviaRoom room, TriviaProvider provider) {
     final isHost = widget.isHost;
     final isRoomFull = room.isRoomFull;
 
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 40),
-            // Room code display
+            const SizedBox(height: 20),
+            // Room code display - updated to match Stitch design
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: AppColors.backgroundWhite,
                 borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.borderBlue),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
+                    color: AppColors.shadowSoft,
+                    blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: Column(
                 children: [
-                  Text(
-                    'Room Code',
-                    style: AppTextStyles.bodyLarge.copyWith(
-                      color: AppColors.textSecondary,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySoft,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '🎟️ Room Code',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: AppColors.primaryBlue,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   Text(
                     room.roomCode,
                     style: AppTextStyles.heading1.copyWith(
@@ -286,10 +463,17 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
                       color: AppColors.primaryBlue,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Share this code with your partner',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 32),
 
             // Status indicator
             if (isRoomFull) ...[
@@ -382,37 +566,6 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildProgressBar(TriviaProvider provider) {
-    final current = provider.currentQuestionIndex + 1;
-    final total = provider.totalQuestions;
-
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Question $current of $total',
-              style: AppTextStyles.bodyLarge.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        LinearProgressIndicator(
-          value: current / total,
-          backgroundColor: AppColors.borderLight,
-          valueColor: const AlwaysStoppedAnimation<Color>(
-            AppColors.accentGreen,
-          ),
-          minHeight: 8,
-          borderRadius: BorderRadius.circular(4),
-        ),
-      ],
     );
   }
 
@@ -978,19 +1131,59 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
       decoration: BoxDecoration(
         color: AppColors.backgroundWhite,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isCorrect ? AppColors.accentGreen : AppColors.error,
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowSoft,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
+          // Result indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: isCorrect 
+                  ? AppColors.accentGreen.withOpacity(0.15)
+                  : AppColors.error.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                  color: isCorrect ? AppColors.accentGreen : AppColors.error,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  isCorrect ? 'Correct! ✨' : 'Not quite! 🤔',
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: isCorrect ? AppColors.accentGreen : AppColors.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           Text(
-            'Correct Answer:',
-            style: AppTextStyles.bodyLarge.copyWith(
+            'The answer is:',
+            style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             puzzle.answer,
-            style: AppTextStyles.heading2.copyWith(
+            style: AppTextStyles.heading3.copyWith(
               color: AppColors.accentGreen,
             ),
           ),
@@ -998,7 +1191,7 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
               provider.selectedAnswer != puzzle.answer) ...[
             const SizedBox(height: 12),
             Text(
-              'Your selection: ${provider.selectedAnswer}',
+              'Your answer: ${provider.selectedAnswer}',
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.error,
                 decoration: TextDecoration.lineThrough,
@@ -1006,15 +1199,25 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
             ),
           ],
           const SizedBox(height: 16),
-          LinearProgressIndicator(
-            value: null,
-            backgroundColor: AppColors.borderLight,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              isCorrect ? AppColors.accentGreen : AppColors.primaryBlue,
+          // Animated progress indicator
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: null,
+              backgroundColor: AppColors.borderLight,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                isCorrect ? AppColors.accentGreen : AppColors.primaryBlue,
+              ),
+              minHeight: 4,
             ),
           ),
           const SizedBox(height: 8),
-          Text('Next question in 3 seconds...', style: AppTextStyles.bodySmall),
+          Text(
+            'Next question in 3 seconds...',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
         ],
       ),
     );
@@ -1029,54 +1232,90 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
 
     final myScore = scores[currentUserId] ?? 0;
     final totalQuestions = provider.totalQuestions;
+    final percentage = (myScore / totalQuestions * 100).round();
 
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 40),
-            // Trophy icon
-            const Icon(
-              Icons.emoji_events_rounded,
-              size: 100,
-              color: AppColors.warning,
+            const SizedBox(height: 20),
+            // Trophy with background container
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: AppColors.warning.withOpacity(0.15),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.warning.withOpacity(0.3),
+                  width: 3,
+                ),
+              ),
+              child: const Center(
+                child: Text('🏆', style: TextStyle(fontSize: 60)),
+              ),
             ),
             const SizedBox(height: 24),
 
             // Result message
             Text(
-              'Great Job! 🎉',
-              style: AppTextStyles.heading1,
+              percentage >= 70 ? 'Excellent! 🎉' : percentage >= 40 ? 'Good Try! 👍' : 'Keep Playing! 💪',
+              style: AppTextStyles.heading2,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
 
-            // Final score
+            // Final score card - updated to match Stitch design
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: AppColors.backgroundWhite,
                 borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.borderBlue),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
+                    color: AppColors.shadowSoft,
+                    blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: Column(
                 children: [
-                  Text('Your Score', style: AppTextStyles.heading3),
-                  const SizedBox(height: 20),
-                  Text(
-                    '$myScore / $totalQuestions',
-                    style: AppTextStyles.heading1.copyWith(
-                      color: AppColors.primaryBlue,
-                      fontSize: 48,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySoft,
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    child: Text(
+                      '📊 Final Score',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: AppColors.primaryBlue,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '$myScore',
+                        style: AppTextStyles.heading1.copyWith(
+                          color: AppColors.primaryBlue,
+                          fontSize: 56,
+                        ),
+                      ),
+                      Text(
+                        ' / $totalQuestions',
+                        style: AppTextStyles.heading2.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -1085,26 +1324,47 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
                       color: AppColors.textSecondary,
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  // Progress bar showing score
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value: myScore / totalQuestions,
+                      backgroundColor: AppColors.borderLight,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        percentage >= 70 ? AppColors.accentGreen : 
+                        percentage >= 40 ? AppColors.warning : AppColors.error,
+                      ),
+                      minHeight: 12,
+                    ),
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 32),
 
-            // Play again button
-            ElevatedButton.icon(
-              onPressed: () {
-                provider.leaveRoom();
-                Navigator.of(context).pop();
-              },
-              icon: const Icon(Icons.home_rounded, size: 28),
-              label: const Text('Back to Home'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(280, 72),
-                backgroundColor: AppColors.primaryBlue,
-                foregroundColor: Colors.white,
+            // Back to home button - updated style
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  provider.leaveRoom();
+                  Navigator.of(context).pop();
+                },
+                icon: const Icon(Icons.home_rounded, size: 24),
+                label: const Text('Back to Home'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 60),
+                  backgroundColor: AppColors.primaryBlue,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 0,
+                ),
               ),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -1114,31 +1374,79 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
   void _showExitConfirmation(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Leave Game?', style: AppTextStyles.heading3),
-        content: Text(
-          'Are you sure you want to leave? Your progress will be lost.',
-          style: AppTextStyles.bodyLarge,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Stay',
-              style: AppTextStyles.buttonMedium.copyWith(
-                color: AppColors.primaryBlue,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: AppColors.backgroundWhite,
+        title: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: Text('🚪', style: TextStyle(fontSize: 22)),
               ),
             ),
+            const SizedBox(width: 12),
+            Text('Leave Game?', style: AppTextStyles.heading4),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to leave? Your progress will be lost.',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
           ),
-          ElevatedButton(
-            onPressed: () {
-              context.read<TriviaProvider>().leaveRoom();
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Leave screen
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Leave'),
+        ),
+        actionsPadding: const EdgeInsets.all(16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: const BorderSide(color: AppColors.borderBlue),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    'Stay',
+                    style: AppTextStyles.buttonMedium.copyWith(
+                      color: AppColors.primaryBlue,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    context.read<TriviaProvider>().leaveRoom();
+                    Navigator.pop(dialogContext); // Close dialog
+                    Navigator.pop(context); // Leave screen
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'Leave',
+                    style: AppTextStyles.buttonMedium.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

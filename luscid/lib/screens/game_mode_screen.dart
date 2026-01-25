@@ -16,18 +16,37 @@ import 'game_screen.dart';
 import 'shopping_game_screen.dart';
 import 'multiplayer_setup_screen.dart';
 import 'shopping_multiplayer_setup_screen.dart';
+import 'trivia_game_screen.dart';
+import '../providers/trivia_provider.dart';
 
-enum GameType { memory, shopping }
+enum GameType { memory, shopping, trivia }
 
 class GameModeScreen extends StatelessWidget {
   final GameType gameType;
 
   const GameModeScreen({super.key, required this.gameType});
 
-  String get _gameTitle =>
-      gameType == GameType.memory ? 'Memory Game' : 'Shopping List Game';
+  String get _gameTitle {
+    switch (gameType) {
+      case GameType.memory:
+        return 'Memory Game';
+      case GameType.shopping:
+        return 'Shopping List Game';
+      case GameType.trivia:
+        return 'CineRecall';
+    }
+  }
 
-  String get _gameEmoji => gameType == GameType.memory ? '🧠' : '🛒';
+  String get _gameEmoji {
+    switch (gameType) {
+      case GameType.memory:
+        return '🧠';
+      case GameType.shopping:
+        return '🛒';
+      case GameType.trivia:
+        return '🎬';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -182,50 +201,378 @@ class GameModeScreen extends StatelessWidget {
   }
 
   void _navigateToSolo(BuildContext context) {
-    if (gameType == GameType.memory) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const DifficultySelectScreen(isMultiplayer: false),
-        ),
-      );
-    } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ShoppingDifficultyScreen(mode: ShoppingGameMode.solo),
-        ),
-      );
+    switch (gameType) {
+      case GameType.memory:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const DifficultySelectScreen(isMultiplayer: false),
+          ),
+        );
+        break;
+      case GameType.shopping:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ShoppingDifficultyScreen(mode: ShoppingGameMode.solo),
+          ),
+        );
+        break;
+      case GameType.trivia:
+        // Solo CineRecall - create room with solo flag
+        _startSoloCineRecall(context);
+        break;
     }
   }
 
   void _navigateToBot(BuildContext context) {
-    if (gameType == GameType.memory) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const MemoryBotDifficultyScreen()),
-      );
-    } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ShoppingDifficultyScreen(mode: ShoppingGameMode.bot),
-        ),
-      );
+    switch (gameType) {
+      case GameType.memory:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MemoryBotDifficultyScreen()),
+        );
+        break;
+      case GameType.shopping:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ShoppingDifficultyScreen(mode: ShoppingGameMode.bot),
+          ),
+        );
+        break;
+      case GameType.trivia:
+        // CineRecall doesn't have bot mode yet, show solo
+        _startSoloCineRecall(context);
+        break;
     }
   }
 
   void _navigateToMultiplayer(BuildContext context) {
-    if (gameType == GameType.memory) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const MultiplayerSetupScreen()),
-      );
-    } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const ShoppingMultiplayerSetupScreen()),
-      );
+    switch (gameType) {
+      case GameType.memory:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MultiplayerSetupScreen()),
+        );
+        break;
+      case GameType.shopping:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ShoppingMultiplayerSetupScreen()),
+        );
+        break;
+      case GameType.trivia:
+        _showCineRecallMultiplayerOptions(context);
+        break;
+    }
+  }
+
+  /// Starts a solo CineRecall game
+  void _startSoloCineRecall(BuildContext context) {
+    final triviaProvider = context.read<TriviaProvider>();
+    triviaProvider.startSoloGame();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const TriviaGameScreen(
+          roomCode: 'SOLO',
+          isHost: true,
+          isSolo: true,
+        ),
+      ),
+    );
+  }
+
+  /// Shows multiplayer options for CineRecall (Create or Join)
+  void _showCineRecallMultiplayerOptions(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: AppColors.backgroundWhite,
+        title: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: Text('🎬', style: TextStyle(fontSize: 22)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text('CineRecall', style: AppTextStyles.heading4),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Create Room button
+            _buildMultiplayerOption(
+              context: dialogContext,
+              parentContext: context,
+              title: 'Create Room',
+              subtitle: 'Host a game for friends',
+              emoji: '➕',
+              onTap: () {
+                Navigator.pop(dialogContext);
+                _createCineRecallRoom(context);
+              },
+            ),
+            const SizedBox(height: 12),
+            // Join Room button
+            _buildMultiplayerOption(
+              context: dialogContext,
+              parentContext: context,
+              title: 'Join Room',
+              subtitle: 'Enter a room code',
+              emoji: '🔗',
+              onTap: () {
+                Navigator.pop(dialogContext);
+                _showJoinCineRecallDialog(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMultiplayerOption({
+    required BuildContext context,
+    required BuildContext parentContext,
+    required String title,
+    required String subtitle,
+    required String emoji,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: AppColors.backgroundLight,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.bold)),
+                    Text(subtitle, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textSecondary),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Creates a new CineRecall room
+  Future<void> _createCineRecallRoom(BuildContext context) async {
+    final triviaProvider = context.read<TriviaProvider>();
+    
+    // Generate user ID
+    final userId = 'user_${DateTime.now().millisecondsSinceEpoch}';
+    triviaProvider.setCurrentUser(userId);
+    
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primaryBlue),
+      ),
+    );
+
+    try {
+      final roomCode = await triviaProvider.createRoom(userId);
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+        if (roomCode != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => TriviaGameScreen(roomCode: roomCode, isHost: true),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(triviaProvider.error ?? 'Failed to create room')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create room: $e')),
+        );
+      }
+    }
+  }
+
+  /// Shows dialog to join an existing CineRecall room
+  void _showJoinCineRecallDialog(BuildContext parentContext) {
+    final codeController = TextEditingController();
+    
+    showDialog(
+      context: parentContext,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: AppColors.backgroundWhite,
+        title: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: Text('🔗', style: TextStyle(fontSize: 22)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text('Join Room', style: AppTextStyles.heading4),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Enter the 6-digit room code',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: codeController,
+              textAlign: TextAlign.center,
+              maxLength: 6,
+              style: AppTextStyles.heading3.copyWith(letterSpacing: 8),
+              textCapitalization: TextCapitalization.characters,
+              decoration: InputDecoration(
+                hintText: 'XXXXXX',
+                counterText: '',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: AppColors.borderBlue),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: AppColors.primaryBlue, width: 2),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actionsPadding: const EdgeInsets.all(16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: const BorderSide(color: AppColors.borderBlue),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text('Cancel', style: AppTextStyles.buttonMedium.copyWith(color: AppColors.textSecondary)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    final code = codeController.text.trim().toUpperCase();
+                    if (code.length == 6) {
+                      Navigator.pop(dialogContext);
+                      _joinCineRecallRoom(parentContext, code);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryBlue,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text('Join', style: AppTextStyles.buttonMedium.copyWith(color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Joins an existing CineRecall room
+  Future<void> _joinCineRecallRoom(BuildContext context, String roomCode) async {
+    final triviaProvider = context.read<TriviaProvider>();
+    
+    // Generate user ID for guest
+    final guestId = 'guest_${DateTime.now().millisecondsSinceEpoch}';
+    triviaProvider.setCurrentUser(guestId);
+    
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primaryBlue),
+      ),
+    );
+
+    try {
+      final result = await triviaProvider.joinRoom(roomCode, guestId);
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading
+        if (result != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => TriviaGameScreen(roomCode: roomCode, isHost: false),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(triviaProvider.error ?? 'Room not found or full')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to join: $e')),
+        );
+      }
     }
   }
 }

@@ -23,7 +23,7 @@
 /// // Leave when done
 /// await voiceChat.leaveRoom();
 /// ```
-library voice_chat;
+library;
 
 export 'voice_chat_service.dart';
 export 'voice_chat_overlay.dart';

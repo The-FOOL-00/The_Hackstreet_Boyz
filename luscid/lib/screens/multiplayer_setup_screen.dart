@@ -83,7 +83,7 @@ class _MultiplayerSetupScreenState extends State<MultiplayerSetupScreen> {
               title: Text('Play Together', style: AppTextStyles.heading4),
             ),
             body: SafeArea(
-              child: _createdRoomCode != null || _hasJoined
+              child: _shouldShowWaitingScreen(gameProvider)
                   ? _buildWaitingScreen(gameProvider)
                   : _buildSetup(gameProvider),
             ),
@@ -91,6 +91,21 @@ class _MultiplayerSetupScreenState extends State<MultiplayerSetupScreen> {
         );
       },
     );
+  }
+
+  bool _shouldShowWaitingScreen(GameProvider gameProvider) {
+    // Show waiting screen if:
+    // 1. We have explicitly set _createdRoomCode (host created room)
+    // 2. We have joined as guest (_hasJoined)
+    // 3. Provider has a room in waiting status and we haven't joined (handles race condition)
+    final room = gameProvider.room;
+    final hasRoomInWaiting = room != null && 
+                             room.status == GameRoomStatus.waiting && 
+                             !_hasJoined; // If not joined, we must be the host
+    
+    final result = _createdRoomCode != null || _hasJoined || hasRoomInWaiting;
+    debugPrint('[MultiplayerSetup] _shouldShowWaitingScreen: result=$result, _createdRoomCode=$_createdRoomCode, _hasJoined=$_hasJoined, hasRoomInWaiting=$hasRoomInWaiting, room.code=${room?.roomCode}, room.status=${room?.status}');
+    return result;
   }
 
   Widget _buildSetup(GameProvider gameProvider) {
@@ -271,7 +286,10 @@ class _MultiplayerSetupScreenState extends State<MultiplayerSetupScreen> {
 
   Widget _buildWaitingScreen(GameProvider gameProvider) {
     final room = gameProvider.room;
-    final isHost = _createdRoomCode != null;
+    // Use local room code if set, otherwise use provider's room code (handles race condition)
+    final displayRoomCode = _createdRoomCode ?? room?.roomCode;
+    // We're the host if we have a room code and we haven't joined someone else's room
+    final isHost = displayRoomCode != null && !_hasJoined;
     final hasGuest = room?.guestId != null;
 
     // Determine waiting message
@@ -302,7 +320,7 @@ class _MultiplayerSetupScreenState extends State<MultiplayerSetupScreen> {
           ),
           const SizedBox(height: 32),
           // Room code display (for host)
-          if (_createdRoomCode != null)
+          if (isHost)
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -325,11 +343,11 @@ class _MultiplayerSetupScreenState extends State<MultiplayerSetupScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(_createdRoomCode ?? '', style: AppTextStyles.roomCode),
+                  Text(displayRoomCode, style: AppTextStyles.roomCode),
                   const SizedBox(height: 16),
                   OutlinedButton.icon(
                     onPressed: () {
-                      Clipboard.setData(ClipboardData(text: _createdRoomCode!));
+                      Clipboard.setData(ClipboardData(text: displayRoomCode));
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Code copied to clipboard!'),
@@ -402,6 +420,7 @@ class _MultiplayerSetupScreenState extends State<MultiplayerSetupScreen> {
   }
 
   Future<void> _createRoom(GameProvider gameProvider) async {
+    debugPrint('[MultiplayerSetup] _createRoom: Starting...');
     // First select difficulty
     final difficulty = await Navigator.of(context).push<GameDifficulty>(
       MaterialPageRoute(
@@ -409,18 +428,35 @@ class _MultiplayerSetupScreenState extends State<MultiplayerSetupScreen> {
       ),
     );
 
-    if (difficulty == null) return;
+    debugPrint('[MultiplayerSetup] _createRoom: Returned from difficulty selection, difficulty=$difficulty');
+    if (difficulty == null) {
+      debugPrint('[MultiplayerSetup] _createRoom: User cancelled');
+      return;
+    }
 
+    debugPrint('[MultiplayerSetup] _createRoom: Calling gameProvider.createRoom...');
     final roomCode = await gameProvider.createRoom(difficulty);
+    debugPrint('[MultiplayerSetup] _createRoom: createRoom returned, roomCode=$roomCode, provider.room=${gameProvider.room?.roomCode}');
 
     if (roomCode != null) {
-      setState(() {
-        _createdRoomCode = roomCode;
-      });
+      if (mounted) {
+        debugPrint('[MultiplayerSetup] _createRoom: SUCCESS, setting _createdRoomCode=$roomCode');
+        setState(() {
+          _createdRoomCode = roomCode;
+        });
+        debugPrint('[MultiplayerSetup] _createRoom: setState complete');
+      } else {
+        debugPrint('[MultiplayerSetup] _createRoom: Widget not mounted');
+      }
     } else {
-      setState(() {
-        _error = gameProvider.error ?? 'Failed to create room';
-      });
+      if (mounted) {
+        debugPrint('[MultiplayerSetup] _createRoom: FAILED, error=${gameProvider.error}');
+        setState(() {
+          _error = gameProvider.error ?? 'Failed to create room';
+        });
+      } else {
+        debugPrint('[MultiplayerSetup] _createRoom: Widget not mounted (error case)');
+      }
     }
   }
 

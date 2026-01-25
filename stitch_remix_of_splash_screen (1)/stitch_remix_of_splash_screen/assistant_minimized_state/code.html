@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LUCID - Memory Assistant</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#259df4",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101a22",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(37, 157, 244, 0.2);
+        }
+        .glow-blue {
+            box-shadow: 0 0 20px 2px rgba(37, 157, 244, 0.4);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#0d161c] dark:text-slate-100 min-h-screen relative overflow-x-hidden">
+<!-- Top Navigation Bar -->
+<header class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800">
+<div class="flex size-12 shrink-0 items-center">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-primary" data-alt="Senior user profile picture smiling" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBqiI8mKebnvcTUKBRTBZ9PTcdzcTSl4EJETemNU1bPTQ4AHX7s0kXtLowu96jzLwuLztweAztazDqwrLFBNuPtqPhcE7uattafCM0mHmJqpt-oxSPiW-bGmxd8WBpKwy7DusT77JtO6eE7iNVSMytcUK7cazXbW-2egCpSxiMSoc_QcXybunvMlasePKqSmD6VaLY8HsajjXJ53lY9-KUSRQ8RCuomwKdmN-pfOUbaGW1EBVLPDqrWHSmWvyZCtNRJNto3jWbP8A");'></div>
+</div>
+<h2 class="text-primary text-xl font-extrabold leading-tight tracking-[-0.015em] flex-1 text-center">LUCID</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="flex cursor-pointer items-center justify-center rounded-full h-10 w-10 bg-slate-100 dark:bg-slate-800 text-[#0d161c] dark:text-slate-100">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</header>
+<main class="pb-32">
+<!-- Welcome Section -->
+<div class="px-4 pt-6 pb-2">
+<h1 class="text-2xl font-bold leading-tight">Good morning, Arthur!</h1>
+<p class="text-slate-500 dark:text-slate-400 font-medium">Ready for your 5-minute memory boost?</p>
+</div>
+<!-- Stats Section -->
+<div class="flex flex-wrap gap-4 p-4">
+<div class="flex min-w-[140px] flex-1 flex-col gap-2 rounded-xl p-5 bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-orange-500">local_fire_department</span>
+<p class="text-slate-600 dark:text-slate-300 text-sm font-semibold">Daily Streak</p>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="text-[#0d161c] dark:text-white tracking-light text-2xl font-bold">5 Days</p>
+<p class="text-[#078838] text-sm font-bold">+1</p>
+</div>
+</div>
+<div class="flex min-w-[140px] flex-1 flex-col gap-2 rounded-xl p-5 bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">psychology</span>
+<p class="text-slate-600 dark:text-slate-300 text-sm font-semibold">Brain Score</p>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="text-[#0d161c] dark:text-white tracking-light text-2xl font-bold">840</p>
+<p class="text-[#078838] text-sm font-bold">+12%</p>
+</div>
+</div>
+</div>
+<!-- Section Header -->
+<div class="flex items-center justify-between px-4 pb-3 pt-5">
+<h2 class="text-[#0d161c] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">Daily Exercises</h2>
+<button class="text-primary font-bold text-sm">View All</button>
+</div>
+<!-- Training Cards -->
+<div class="p-4 space-y-4">
+<!-- Exercise 1 -->
+<div class="flex items-stretch justify-between gap-4 rounded-xl bg-white dark:bg-slate-800 p-4 shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="flex flex-[2_2_0px] flex-col justify-between py-1">
+<div class="flex flex-col gap-1">
+<p class="text-[#0d161c] dark:text-white text-lg font-bold leading-tight">Face Recall</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal">Remember names of family members</p>
+</div>
+<button class="flex min-w-[100px] cursor-pointer items-center justify-center rounded-full h-10 px-5 bg-primary text-white gap-2 text-sm font-bold mt-4 shadow-sm active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[20px]">play_arrow</span>
+<span>Start</span>
+</button>
+</div>
+<div class="w-32 h-32 bg-center bg-no-repeat bg-cover rounded-xl" data-alt="Grid of four friendly faces" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB8zGTacWGd-JlxYJmT0lKwEpW0FJNt9vRcm3MdLH1n2KUo4y1LjuJx5WgT3flcdVDM3aR5qpnMTvDNxZE_2UnRl7be61qOz3jmdkb1epTNkZAtoAFrsr36v-_Nj2NYpieQmT75N2JROHpM0ruZR-FMLRPMgGVkUf4Rqcg-KMf5YlnelOZKa7_bZR8-OLXaT1L0xao9DBmgT6LiNJBnnL2nMxIt72JS-DEMKuBwgJpXjJTTGM-3gB625JdRsmqa_M2I6Z7O1pq3yg");'></div>
+</div>
+<!-- Exercise 2 -->
+<div class="flex items-stretch justify-between gap-4 rounded-xl bg-white dark:bg-slate-800 p-4 shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="flex flex-[2_2_0px] flex-col justify-between py-1">
+<div class="flex flex-col gap-1">
+<p class="text-[#0d161c] dark:text-white text-lg font-bold leading-tight">Number Sequence</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal">Practice short-term memory</p>
+</div>
+<button class="flex min-w-[100px] cursor-pointer items-center justify-center rounded-full h-10 px-5 bg-primary text-white gap-2 text-sm font-bold mt-4 shadow-sm active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[20px]">play_arrow</span>
+<span>Start</span>
+</button>
+</div>
+<div class="w-32 h-32 bg-center bg-no-repeat bg-cover rounded-xl" data-alt="Bright colored numbered blocks 1 to 5" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAZY9GuDBWBvEdcC0pUkqquE4ChzR2O_iL_yd-68Ljr4huvYchmnwLwHTbWG-N053MtTnEouVxQacZ7XgUmadmhVJCUIpSBst5da6ZTgiNjT-ymf83MrRS1Frnhj4dFKdMf8jo_l3DsfAydUOsdfrrer2e3NjcVHp1Rm3IpvlZLE1_v3OgWnj5kpr3yBBY4uGZzjo_OoXH2DYijMP_Se3pxloy7ALj-PvszW64zOo7TJndohwPgQ3iQ3TblNXaSLlTpcemjTEGGRA");'></div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (iOS Style) -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center z-40">
+<div class="flex flex-col items-center text-primary">
+<span class="material-symbols-outlined">home</span>
+<span class="text-xs font-bold mt-1">Home</span>
+</div>
+<div class="flex flex-col items-center text-slate-400">
+<span class="material-symbols-outlined">trending_up</span>
+<span class="text-xs font-medium mt-1">Progress</span>
+</div>
+<div class="flex flex-col items-center text-slate-400">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="text-xs font-medium mt-1">Games</span>
+</div>
+<div class="flex flex-col items-center text-slate-400">
+<span class="material-symbols-outlined">person</span>
+<span class="text-xs font-medium mt-1">Profile</span>
+</div>
+</nav>
+<!-- Smart Avatar Assistant - Minimized FAB -->
+<div class="fixed bottom-24 right-6 z-50">
+<div class="relative group">
+<!-- Glow effect background -->
+<div class="absolute -inset-1 bg-primary/30 rounded-full blur-md animate-pulse"></div>
+<!-- The FAB -->
+<button class="relative glass-morphism glow-blue w-20 h-20 rounded-full flex flex-col items-center justify-center text-primary active:scale-90 transition-all duration-300">
+<div class="relative">
+<!-- Custom Cat Icon Representation using Material Symbols and Shapes -->
+<div class="flex flex-col items-center">
+<div class="flex gap-4 -mb-1">
+<!-- Ear-like chat bubbles -->
+<div class="w-4 h-4 bg-primary rounded-tr-full rounded-tl-full rounded-bl-full"></div>
+<div class="w-4 h-4 bg-primary rounded-tl-full rounded-tr-full rounded-br-full"></div>
+</div>
+<span class="material-symbols-outlined text-[42px] leading-none" style="font-variation-settings: 'FILL' 1">pets</span>
+</div>
+</div>
+</button>
+<!-- Tooltip/Label (Optional) -->
+<div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-slate-900 text-white text-xs font-bold py-2 px-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                Ask Lucy for help
+            </div>
+</div>
+</div>
+</body></html>

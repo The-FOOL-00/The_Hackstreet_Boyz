@@ -8,7 +8,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/buddy_list_provider.dart';
 import '../providers/invite_provider.dart';
-import '../providers/notification_provider.dart';
 import '../services/contact_service.dart';
 import '../widgets/invite_modal.dart';
 import 'user_search_screen.dart';

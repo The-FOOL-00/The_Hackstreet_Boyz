@@ -26,7 +26,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
   bool _isSearching = false;
   String? _errorMessage;
   String? _successMessage;
-  Set<String> _sentInvites = {};
+  final Set<String> _sentInvites = {};
 
   @override
   void initState() {

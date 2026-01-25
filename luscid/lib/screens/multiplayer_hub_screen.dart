@@ -7,9 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/colors.dart';
-import '../core/constants/text_styles.dart';
 import '../providers/game_provider.dart';
-import '../providers/shopping_list_provider.dart';
 import 'multiplayer_setup_screen.dart';
 import 'shopping_multiplayer_setup_screen.dart';
 
@@ -84,9 +82,10 @@ class MultiplayerHubScreen extends StatelessWidget {
                 onTap: () {
                   // Set user ID for multiplayer
                   final gameProvider = context.read<GameProvider>();
-                  gameProvider.setCurrentUserId(
-                    'user_${DateTime.now().millisecondsSinceEpoch}',
-                  );
+                  final userId = 'user_${DateTime.now().millisecondsSinceEpoch}';
+                  debugPrint('[MultiplayerHub] Setting user ID: $userId');
+                  gameProvider.setCurrentUserId(userId);
+                  debugPrint('[MultiplayerHub] Navigating to MultiplayerSetupScreen');
                   Navigator.push(
                     context,
                     MaterialPageRoute(

@@ -58,7 +58,7 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
     });
   }
 
-  void _initVoiceChat() {
+  void _initVoiceChat() async {
     final authProvider = context.read<AuthProvider>();
     final triviaProvider = context.read<TriviaProvider>();
 
@@ -77,9 +77,13 @@ class _TriviaGameScreenState extends State<TriviaGameScreen>
         userId: currentUserId,
         userName: userName,
       );
-      _voiceChat!.joinRoom();
       _voiceChat!.addListener(_onVoiceChatChanged);
-      print('=== Voice chat initialized and joined ===');
+      
+      // Join room asynchronously and log result
+      final success = await _voiceChat!.joinRoom();
+      print('=== Voice chat joinRoom result: $success, state: ${_voiceChat?.state} ===');
+      
+      if (mounted) setState(() {}); // Trigger rebuild after joining
     } else {
       print(
         '=== Voice chat NOT initialized: userId=$currentUserId, roomCode=${widget.roomCode} ===',

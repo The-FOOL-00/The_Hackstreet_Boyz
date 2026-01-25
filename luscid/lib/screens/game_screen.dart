@@ -24,6 +24,7 @@ class GameScreen extends StatefulWidget {
 class _GameScreenState extends State<GameScreen> {
   bool _isListening = false;
   VoiceChatService? _voiceChat;
+  bool _voiceChatInitAttempted = false;
 
   @override
   void initState() {
@@ -37,7 +38,9 @@ class _GameScreenState extends State<GameScreen> {
     });
   }
 
-  void _initVoiceChat() {
+  void _initVoiceChat() async {
+    if (_voiceChatInitAttempted) return; // Prevent multiple attempts
+    
     final gameProvider = context.read<GameProvider>();
     final authProvider = context.read<AuthProvider>();
     final room = gameProvider.room;
@@ -50,14 +53,19 @@ class _GameScreenState extends State<GameScreen> {
     debugPrint('[GameScreen] Voice chat init: isMultiplayer=${gameProvider.isMultiplayer}, room=${room?.roomCode}, userId=$currentUserId');
     
     if (gameProvider.isMultiplayer && room != null && currentUserId != null) {
+      _voiceChatInitAttempted = true; // Mark as attempted
       _voiceChat = VoiceChatService(
         roomId: 'memory_${room.roomCode}',
         userId: currentUserId,
         userName: userName,
       );
-      _voiceChat!.joinRoom();
       _voiceChat!.addListener(_onVoiceChatChanged);
-      debugPrint('[GameScreen] Voice chat service created and joined!');
+      
+      // Join room asynchronously and log result
+      final success = await _voiceChat!.joinRoom();
+      debugPrint('[GameScreen] Voice chat joinRoom result: $success, state: ${_voiceChat?.state}');
+      
+      if (mounted) setState(() {}); // Trigger rebuild after joining
     } else {
       debugPrint('[GameScreen] Voice chat NOT initialized - conditions not met');
     }
@@ -115,6 +123,13 @@ class _GameScreenState extends State<GameScreen> {
         final gridSize = gameProvider.gridSize;
         final cards = gameProvider.cards;
         final isMultiplayer = gameProvider.isMultiplayer;
+
+        // Try to init voice chat when provider updates (in case it wasn't ready initially)
+        if (_voiceChat == null && isMultiplayer && gameProvider.room != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _initVoiceChat();
+          });
+        }
 
         // Show loading if cards are empty (waiting for sync)
         if (cards.isEmpty || gridSize == 0) {
@@ -307,15 +322,16 @@ class _GameScreenState extends State<GameScreen> {
                         ],
                       ),
                     ),
-                  // Floating mic button (bottom center)
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 24,
-                    child: Center(
-                      child: _buildVoiceChatButton(),
+                  // Floating mic button (bottom center) - only show in multiplayer
+                  if (isMultiplayer)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 24,
+                      child: Center(
+                        child: _buildVoiceChatButton(),
+                      ),
                     ),
-                  ),
             ],
           ),
         );

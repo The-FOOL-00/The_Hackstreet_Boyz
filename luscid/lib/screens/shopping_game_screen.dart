@@ -43,30 +43,36 @@ class _ShoppingGameScreenState extends State<ShoppingGameScreen> {
     }
   }
 
-  void _tryInitVoiceChat() {
+  void _tryInitVoiceChat() async {
     if (_voiceChatInitialized) return;
     
     final provider = context.read<ShoppingListProvider>();
     final room = provider.room;
     final currentUserId = provider.currentUserId;
     
-    // Check if this is a multiplayer game (has guest) or we're waiting for guest
-    final isMultiplayerRoom = room != null && room.guestId != null;
+    // Initialize voice chat for multiplayer games (when guest has joined)
+    // Both host and guest need to be in the room for voice chat
+    final hasGuest = room != null && room.guestId != null;
     
-    debugPrint('[ShoppingGame] Voice chat try init: hasRoom=${room != null}, hasGuest=${room?.guestId != null}, userId=$currentUserId');
+    debugPrint('[ShoppingGame] Voice chat try init: hasRoom=${room != null}, hasGuest=$hasGuest, userId=$currentUserId, roomCode=${room?.roomCode}');
     
-    if (isMultiplayerRoom && currentUserId != null) {
+    if (hasGuest && currentUserId != null) {
+      debugPrint('[ShoppingGame] Creating voice chat service...');
       _voiceChat = VoiceChatService(
         roomId: 'shopping_${room.roomCode}',
         userId: currentUserId,
         userName: 'Player',
       );
-      _voiceChat!.joinRoom();
       _voiceChat!.addListener(_onVoiceChatChanged);
       _voiceChatInitialized = true;
-      debugPrint('[ShoppingGame] Voice chat service created and joined!');
+      
+      // Join room asynchronously and log result
+      final success = await _voiceChat!.joinRoom();
+      debugPrint('[ShoppingGame] Voice chat joinRoom result: $success, state: ${_voiceChat?.state}');
+      
+      if (mounted) setState(() {}); // Trigger rebuild to show button
     } else {
-      debugPrint('[ShoppingGame] Voice chat NOT initialized yet - waiting for multiplayer conditions');
+      debugPrint('[ShoppingGame] Voice chat NOT initialized yet - waiting for guest to join');
     }
   }
 
@@ -85,13 +91,24 @@ class _ShoppingGameScreenState extends State<ShoppingGameScreen> {
   Widget _buildVoiceChatButton() {
     final isConnected = _voiceChat?.isConnected ?? false;
     final isMuted = _voiceChat?.isMuted ?? true;
+    final state = _voiceChat?.state;
+    
+    debugPrint('[ShoppingGame] Building voice button: initialized=$_voiceChatInitialized, connected=$isConnected, muted=$isMuted, state=$state');
 
     // Larger, accessible floating mic button for seniors
     return SizedBox(
       width: 72,
       height: 72,
       child: ElevatedButton(
-        onPressed: isConnected ? () => _voiceChat?.toggleMute() : null,
+        onPressed: _voiceChat != null ? () {
+          if (isConnected) {
+            _voiceChat?.toggleMute();
+          } else {
+            // Try to reconnect
+            debugPrint('[ShoppingGame] Trying to reconnect voice chat...');
+            _voiceChat?.joinRoom();
+          }
+        } : null,
         style: ElevatedButton.styleFrom(
           shape: const CircleBorder(),
           backgroundColor: !isConnected
@@ -103,7 +120,11 @@ class _ShoppingGameScreenState extends State<ShoppingGameScreen> {
           padding: EdgeInsets.zero,
         ),
         child: Icon(
-          isMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
+          !isConnected 
+              ? Icons.mic_off_rounded 
+              : isMuted 
+                  ? Icons.mic_off_rounded 
+                  : Icons.mic_rounded,
           size: 36,
           color: !isConnected
               ? AppColors.textSecondary
